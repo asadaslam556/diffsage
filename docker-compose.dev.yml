@@ -1,0 +1,10 @@
+# Publishes the data stores on localhost so the API can run on the host
+# (.\diffsage.ps1 infra / make infra). Bound to 127.0.0.1 so nothing is
+# reachable from the rest of the network.
+services:
+  postgres:
+    ports: ["127.0.0.1:5432:5432"]
+  redis:
+    ports: ["127.0.0.1:6379:6379"]
+  qdrant:
+    ports: ["127.0.0.1:6333:6333"]

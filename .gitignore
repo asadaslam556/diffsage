@@ -1,0 +1,32 @@
+# env / secrets
+.env
+.env.*
+!.env.example
+
+# python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+*.egg-info/
+*.db
+
+# node
+node_modules/
+dist/
+.vite/
+coverage/
+
+# editors / os
+.idea/
+.vscode/
+.DS_Store
+
+# local browser-automation output
+.playwright-mcp/
+
+# Claude Code: the shared .claude/ folder is committed, personal overrides are not
+.claude/settings.local.json
