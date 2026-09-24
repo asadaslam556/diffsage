@@ -1,0 +1,119 @@
+# One command: `docker compose up --build`, then open http://localhost:8080
+#
+# First start pulls the Ollama models (a few GB), so give it a while. If you
+# already run Ollama on your machine, see README for pointing at that instead.
+
+name: diffsage
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-app}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-app}
+      POSTGRES_DB: ${POSTGRES_DB:-diffsage}
+      TZ: UTC
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--save", "", "--appendonly", "no", "--maxmemory", "256mb", "--maxmemory-policy", "allkeys-lru"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
+  qdrant:
+    image: qdrant/qdrant:v1.12.4
+    volumes:
+      - qdrant:/qdrant/storage
+    restart: unless-stopped
+
+  ollama:
+    image: ollama/ollama:latest
+    environment:
+      # Loading a model from disk takes a minute or two on a CPU-only box. The default
+      # 5-minute keep-alive would make everyone who comes back from a coffee pay that again.
+      OLLAMA_KEEP_ALIVE: ${OLLAMA_KEEP_ALIVE:-24h}
+      # The 4k default is too small for a 12k-character review plus the system prompt and
+      # history, and Ollama truncates silently when it overflows.
+      OLLAMA_CONTEXT_LENGTH: ${OLLAMA_CONTEXT_LENGTH:-8192}
+    volumes:
+      - ollama:/root/.ollama
+    ports:
+      # localhost only: Ollama has no auth, so anyone on the network could run or delete models
+      - "127.0.0.1:11434:11434"
+    restart: unless-stopped
+    # GPU users: uncomment to hand the GPU to Ollama
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices: [{ driver: nvidia, count: all, capabilities: [gpu] }]
+
+  # pulls the chat + embedding models, warms the chat model, then exits
+  ollama-pull:
+    image: ollama/ollama:latest
+    depends_on: [ollama]
+    # wait for the server instead of a fixed sleep; on a slow first boot 3s isn't enough
+    # and a failed pull here never retries, which leaves the app with no model
+    entrypoint:
+      - sh
+      - -c
+      - |
+        until ollama list >/dev/null 2>&1; do echo "waiting for ollama..."; sleep 2; done
+        ollama pull $${CHAT_MODEL} && ollama pull $${EMBED_MODEL}
+        # warm the chat model now, so the first review doesn't wait for it to load
+        ollama run $${CHAT_MODEL} "Reply with OK." >/dev/null && echo "$${CHAT_MODEL} loaded and ready"
+    environment:
+      OLLAMA_HOST: http://ollama:11434
+      CHAT_MODEL: ${OLLAMA_MODEL:-qwen2.5-coder:7b}
+      EMBED_MODEL: ${OLLAMA_EMBED_MODEL:-nomic-embed-text}
+    restart: on-failure:3
+
+  backend:
+    build: ./backend
+    env_file: .env
+    environment:
+      APP__ENVIRONMENT: ${APP_ENVIRONMENT:-development}
+      APP__LOG_FORMAT: json
+      APP__TRUST_PROXY_HEADERS: "true"
+      APP__CORS_ORIGINS: http://localhost:${WEB_PORT:-8080}
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-app}:${POSTGRES_PASSWORD:-app}@postgres:5432/${POSTGRES_DB:-diffsage}
+      REDIS_URL: redis://redis:6379/0
+      QDRANT_URL: http://qdrant:6333
+      PROVIDERS__OLLAMA__BASE_URL: ${OLLAMA_BASE_URL:-http://ollama:11434}
+      PROVIDERS__OLLAMA__MODEL: ${OLLAMA_MODEL:-qwen2.5-coder:7b}
+      EMBEDDINGS__MODEL: ${OLLAMA_EMBED_MODEL:-nomic-embed-text}
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis: { condition: service_healthy }
+      qdrant: { condition: service_started }
+    ports:
+      # localhost only: the browser goes through nginx on :8080, and a public :8000
+      # would let clients skip the proxy and forge X-Forwarded-For
+      - "127.0.0.1:${API_PORT:-8000}:8000"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+
+  frontend:
+    build: ./frontend
+    depends_on:
+      backend: { condition: service_healthy }
+    ports:
+      - "${WEB_PORT:-8080}:80"   # set WEB_PORT in .env if 8080 is taken
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+  qdrant:
+  ollama:

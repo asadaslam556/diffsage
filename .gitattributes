@@ -1,0 +1,2 @@
+# LF in the repo and in checkouts, so files copied into Linux containers never carry CRLF
+* text=auto eol=lf

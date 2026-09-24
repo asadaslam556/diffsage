@@ -1,0 +1,74 @@
+# Non-secret defaults. Every value here can be overridden with an env var that
+# spells out the path with double underscores, e.g. AGENT__DEFAULT_PROVIDER=anthropic
+# or PROVIDERS__OLLAMA__MODEL=llama3.1:8b. Secrets never go in this file.
+
+[app]
+name = "DiffSage"
+environment = "development"      # "production" turns on the strict checks
+log_level = "INFO"
+log_format = "text"              # "json" in containers
+cors_origins = ["http://localhost:5173"]
+trust_proxy_headers = false      # true when running behind the bundled nginx
+
+[auth]
+access_token_minutes = 15
+refresh_token_days = 14
+password_hash_iterations = 600000
+
+[rate_limits]
+# requests per window, keyed per user (or per IP when there's no user yet)
+auth = { limit = 10, window_seconds = 60 }
+agent = { limit = 20, window_seconds = 60 }
+default = { limit = 120, window_seconds = 60 }
+fail_open = true                 # if Redis is down, let traffic through and log loudly
+
+[agent]
+default_provider = "ollama"
+fallback_provider = "ollama"   # or an ordered list: "deepseek,ollama"
+first_token_timeout_seconds = 25
+max_tool_rounds = 3
+history_messages = 20
+default_profile = "code_reviewer"
+internal_gateway_url = "http://127.0.0.1:8000"
+
+[embeddings]
+backend = "ollama"               # "hashing" works offline, good for tests and demos
+model = "nomic-embed-text"
+dim = 768
+
+[vectorstore]
+collection_prefix = "guidelines"
+
+[billing]
+allow_self_serve_plan_change = true   # dev only; production refuses to start with it on. Stripe checkout goes here
+
+[health]
+provider_cache_seconds = 30
+check_timeout_seconds = 4
+
+# One table per provider. The table name is the provider name users pick in the UI.
+# "adapter" says which adapter class speaks its API; it defaults to the table name.
+# API keys come from <NAME>_API_KEY in the environment, e.g. ANTHROPIC_API_KEY.
+
+[providers.ollama]
+base_url = "http://localhost:11434"
+model = "qwen2.5-coder:7b"
+# generous on purpose: Ollama is the last resort, and on a CPU-only laptop just
+# reading a long prompt can take minutes before the first token comes back
+timeout_seconds = 600
+
+[providers.anthropic]
+base_url = "https://api.anthropic.com"
+model = "claude-sonnet-5"
+max_tokens = 4096
+timeout_seconds = 120
+
+[providers.openai]
+base_url = "https://api.openai.com/v1"
+model = "gpt-4o-mini"
+timeout_seconds = 120
+
+[providers.deepseek]
+base_url = "https://api.deepseek.com"
+model = "deepseek-flash"
+timeout_seconds = 120
