@@ -65,7 +65,7 @@ sequenceDiagram
     PR->>M: request (first-token timeout)
     alt model fails or times out
         PR-->>UI: event: fallback
-        PR->>M: same request to Ollama
+        PR->>M: same request to the next fallback
     end
     M-->>PR: tool_call search_guidelines
     PR-->>AG: tool call

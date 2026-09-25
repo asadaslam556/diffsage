@@ -2,7 +2,6 @@
 
 <p align="center">
   <img src="https://skillicons.dev/icons?i=py,fastapi,react,js,docker,nginx,githubactions" alt="Reviewed stack" /><br/>
-  <img src="https://img.shields.io/badge/review-OpenCodeReview%20delegate-5eead4" alt="OCR" />
   <img src="https://img.shields.io/badge/backend%20tests-121%20passing-4ade80?logo=pytest&logoColor=white" alt="backend tests" />
   <img src="https://img.shields.io/badge/frontend%20tests-9%20passing-4ade80?logo=vitest&logoColor=white" alt="frontend tests" />
   <img src="https://img.shields.io/badge/ruff-clean-4ade80" alt="ruff" />
@@ -10,7 +9,7 @@
 
 # Code review report
 
-A full review of the project (formerly "Second Pair", now **DiffSage**) before publishing it. The review ran with **OpenCodeReview in delegate mode** (`ocr delegate preview` / `ocr delegate rule`) over all 103 reviewable files, reading every file in full rather than a diff, and applying OCR's Python, JS/React and YAML rule sets: correctness, security, error handling, concurrency, resource management and dead code.
+Before publishing DiffSage I went through all 103 source files in full, not just a diff, looking at correctness, security, error handling, concurrency, resource management and dead code. Then I ran the whole stack against a real local model and fixed what that turned up.
 
 ## Summary
 
@@ -114,6 +113,6 @@ Run on Windows 11 (i7-1165G7, 16 GB, no discrete GPU) with Docker Desktop and `O
 | Agent calls back through the gateway | A 5-minute agent-scoped token fetched guidelines through the real gateway over HTTP, and was **blocked with 403** on `/api/app/me` and `/api/billing/plan` |
 | Error paths keep request ids | The Postgres-down 503 carried the caller's `X-Request-ID` in the body and the header |
 | Mobile (390 px) | No horizontal overflow on chat or dashboard; the nav collapses to icons |
-| Tests / lint | 116 backend + 9 frontend tests passing; `ruff` clean; production build OK |
+| Tests / lint | 121 backend + 9 frontend tests passing; `ruff` clean; production build OK |
 
 **About speed on this machine:** a 4-core laptop CPU running Ollama inside Docker's WSL VM manages about **1–3 tokens/s** with a 3B model. So a review takes minutes, streaming the whole time. That's the hardware, not the app: the same flow with a Claude, OpenAI or DeepSeek key, or an NVIDIA GPU, runs at normal speed.

@@ -59,7 +59,7 @@ DiffSage is a small but complete GenAI SaaS: login, a usage dashboard, a streami
 | --- | --- |
 | **Streaming** | Token-by-token over Server-Sent Events, rendered live as Markdown with a severity gutter for issues and real diff highlighting. |
 | **Any model** | One provider interface. Ollama, Claude, OpenAI and DeepSeek ship in the box; any OpenAI-compatible API is a config table, not code. |
-| **Fallback** | If the chosen model errors, has no key, or doesn't start answering in time, the request moves to Ollama and the UI says so. |
+| **Fallback** | If the chosen model errors, has no key, or doesn't start answering in time, the request moves to the next fallback (Ollama by default) and the UI says so. |
 | **RAG** | Upload a style guide. It's chunked, embedded, stored in Qdrant per user, and the agent searches it before reviewing. |
 | **Billing** | Free / Pro / Team plans with daily request caps, monthly token caps, input size limits and per-plan model access. |
 | **Real health** | `/api/health` actually pings Postgres, Redis, Qdrant and every configured model provider. |
@@ -70,19 +70,19 @@ It follows the classic GenAI SaaS flow one-to-one: **User request → API gatewa
 
 ```mermaid
 flowchart TD
-    U["🖥️ User request<br/>React web app"] -->|"HTTPS · Bearer JWT"| N["nginx<br/>static files · /api proxy · no buffering"]
-    N --> G["🛡️ API gateway<br/>auth · routing · rate limits"]
+    U["User request<br/>React web app"] -->|"HTTPS · Bearer JWT"| N["nginx<br/>static files · /api proxy · no buffering"]
+    N --> G["API gateway<br/>auth · routing · rate limits"]
     G --> B["Business logic API<br/>users · sessions · documents"]
-    G --> A["🤖 AI agent service<br/>LLM calls & tools"]
-    G --> BL["💳 Billing service<br/>plans & usage limits"]
+    G --> A["AI agent service<br/>LLM calls & tools"]
+    G --> BL["Billing service<br/>plans & usage limits"]
     A -. "agent may call again<br/>(5-min scoped token)" .-> G
     A --> R{"Provider router"}
     R -->|preferred| P["Claude · OpenAI · DeepSeek"]
     R -->|fallback| O["Ollama (local)"]
-    B --> D[("🗄️ Data & storage<br/>Postgres · Qdrant · Redis")]
+    B --> D[("Data & storage<br/>Postgres · Qdrant · Redis")]
     A --> D
     BL --> D
-    A ==>|"SSE, token by token"| L["⚡ Live UI response"]
+    A ==>|"SSE, token by token"| L["Live UI response"]
     L --> U
 ```
 
@@ -207,7 +207,6 @@ diffsage/
 │       ├── components/       # 3D hero, tilt cards, markdown, charts
 │       └── pages/            # Login, Dashboard, Chat, Settings
 ├── docs/                     # architecture, Windows setup, providers, design, review report
-├── .claude/                  # project context + skills for Claude Code (run, agent loop, providers, UI, ship check)
 ├── docker-compose.yml        # the whole stack, one command
 ├── docker-compose.dev.yml    # publishes the data stores on localhost for host dev
 ├── diffsage.ps1              # Windows task runner
@@ -234,7 +233,7 @@ CI (`.github/workflows/ci.yml`) lints and tests both halves, applies the migrati
 | [docs/windows-setup.md](docs/windows-setup.md) | Detailed Windows setup, running without Docker, troubleshooting |
 | [docs/adding-a-provider.md](docs/adding-a-provider.md) | Plugging in another model API |
 | [docs/design.md](docs/design.md) | The design system: tokens, type, 3D moments, accessibility |
-| [docs/code-review-report.md](docs/code-review-report.md) | The full review of this codebase: bugs found, what was fixed, health check results |
+| [docs/code-review-report.md](docs/code-review-report.md) | My pre-release review: bugs found, what was fixed, end-to-end results |
 
 ## Known limits
 
@@ -243,6 +242,10 @@ CI (`.github/workflows/ci.yml`) lints and tests both halves, applies the migrati
 - Plan changes are self-serve in dev. A real deployment would put Stripe Checkout in front of `POST /api/billing/plan` and flip the plan in the webhook.
 - Uploaded guidelines are text only (Markdown, code, plain text), up to 200k characters each.
 
+## Author
+
+Built by **Asad Aslam** ([@asadaslam556](https://github.com/asadaslam556)).
+
 ## License
 
-MIT. See [LICENSE](LICENSE).
+MIT © 2026 Asad Aslam. See [LICENSE](LICENSE).

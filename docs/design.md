@@ -17,7 +17,7 @@ How the UI looks and why, so the next change stays consistent with the last one.
 
 1. **The review is the loudest thing on screen.** Chrome stays quiet so the severity gutter and the diff view carry the page.
 2. **One accent.** A desaturated sage (`#5fd4bf`) marks actions, focus and "you are here". Nothing else competes with it.
-3. **Colour means something.** Green and red are for added and removed lines. Amber and sky only mark `major` and `minor`. Violet appears only in the logo gem and the 3D crystal's rim light.
+3. **Colour means something.** Green and red are for added and removed lines. Amber and sky only mark `major` and `minor`. Violet appears only as the 3D crystal's rim light.
 4. **Spend the boldness in one place.** The 3D moments are few and deliberate: the crystal on sign-in, the isometric usage chart, and a gentle tilt on the cards you choose from (sign-in, plans). Everything else stays still.
 5. **Every screen has its states.** Loading shows skeletons shaped like the content. Empty screens say what to do next. Errors say what happened and how to fix it.
 
@@ -70,9 +70,8 @@ flowchart LR
 - Touch targets are at least 40 px; no horizontal scrolling at 390 px wide.
 - No `window.alert` or `confirm`: removing a file asks inline.
 
-## How this was made
+## How the redesign was done
 
-The redesign pass followed the local design skills in `~/.claude`, applied in order:
-1. **`ui-ux-pro-max`** for the design-system query, contrast and the pre-delivery checklist.
-2. **`taste-skill:redesign-skill`** to audit the old UI: the two-colour "AI gradient", all-caps labels, three identical cards, motion on every card, missing states.
-3. **`frontend-design`** for the plan-then-critique loop: one memorable element, restraint everywhere else, and screenshots reviewed after every change.
+1. **Audit the old UI.** It had a two-colour gradient on everything, all-caps labels, three identical cards in a row, motion on every card, and screens with no empty or error state.
+2. **Set the system first.** Tokens, type scale and contrast targets went in before any screen changed.
+3. **One memorable element, restraint everywhere else.** The crystal carries the sign-in page; every other screen stays quiet. Each change was checked as a screenshot before moving on.

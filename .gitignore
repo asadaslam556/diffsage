@@ -29,5 +29,4 @@ coverage/
 .playwright-mcp/
 .playwright-cli/
 
-# Claude Code: the shared .claude/ folder is committed, personal overrides are not
-.claude/settings.local.json
+.claude/
