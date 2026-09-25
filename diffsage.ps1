@@ -92,7 +92,7 @@ try {
       $env:DATABASE_URL = "postgresql+asyncpg://app:app@localhost:5432/diffsage"
       $env:REDIS_URL = "redis://localhost:6379/0"
       $env:QDRANT_URL = "http://localhost:6333"
-      $env:PROVIDERS__OLLAMA__BASE_URL = "http://localhost:11434"
+      $env:PROVIDERS__OLLAMA__BASE_URL = "http://localhost:$(Env-Port "OLLAMA_PORT" 11434)"
       # compose maps OLLAMA_MODEL for the container; do the same when running on the host
       $m = Select-String -Path .env -Pattern "^OLLAMA_MODEL=(.+)$" -ErrorAction SilentlyContinue | Select-Object -First 1
       if ($m) { $env:PROVIDERS__OLLAMA__MODEL = $m.Matches[0].Groups[1].Value.Trim() }

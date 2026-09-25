@@ -39,7 +39,8 @@ services:
     restart: unless-stopped
 
   ollama:
-    image: ollama/ollama:latest
+    # pinned so a rebuild never pulls a surprise; Dependabot opens a PR for new versions
+    image: ollama/ollama:0.34.3
     environment:
       # Loading a model from disk takes a minute or two on a CPU-only box. The default
       # 5-minute keep-alive would make everyone who comes back from a coffee pay that again.
@@ -51,7 +52,7 @@ services:
       - ollama:/root/.ollama
     ports:
       # localhost only: Ollama has no auth, so anyone on the network could run or delete models
-      - "127.0.0.1:11434:11434"
+      - "127.0.0.1:${OLLAMA_PORT:-11434}:11434"   # set OLLAMA_PORT if a Windows Ollama already has 11434
     restart: unless-stopped
     # GPU users: uncomment to hand the GPU to Ollama
     # deploy:
@@ -61,7 +62,7 @@ services:
 
   # pulls the chat + embedding models, warms the chat model, then exits
   ollama-pull:
-    image: ollama/ollama:latest
+    image: ollama/ollama:0.34.3
     depends_on: [ollama]
     # wait for the server instead of a fixed sleep; on a slow first boot 3s isn't enough
     # and a failed pull here never retries, which leaves the app with no model

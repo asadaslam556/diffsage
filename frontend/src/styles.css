@@ -39,8 +39,8 @@
   --info-wash: rgba(124, 196, 240, 0.1);
   --code-bg: #0a1019;
 
-  --sans: "Geist", "Segoe UI", system-ui, -apple-system, Roboto, sans-serif;
-  --mono: "Geist Mono", ui-monospace, "Cascadia Code", Consolas, monospace;
+  --sans: "Geist Variable", "Segoe UI", system-ui, -apple-system, Roboto, sans-serif;
+  --mono: "Geist Mono Variable", ui-monospace, "Cascadia Code", Consolas, monospace;
 
   /* radius steps: tight on small parts, softer on containers */
   --r-xs: 6px;
