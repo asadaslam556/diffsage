@@ -62,7 +62,7 @@ export default function Login() {
         <ul className="facts-inline">
           <li><GitCompareArrows size={17} aria-hidden="true" /><span><b>Streams as it reviews.</b> Issues arrive ranked blocker to nit, with fixes.</span></li>
           <li><LibraryBig size={17} aria-hidden="true" /><span><b>Knows your conventions.</b> Upload a style guide and it gets cited.</span></li>
-          <li><Waypoints size={17} aria-hidden="true" /><span><b>Any model.</b> Local by default, Claude or OpenAI when you add a key, with automatic fallback.</span></li>
+          <li><Waypoints size={17} aria-hidden="true" /><span><b>Any model.</b> Local by default, Claude, DeepSeek or OpenAI when you add a key, with automatic fallback.</span></li>
         </ul>
       </section>
 

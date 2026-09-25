@@ -99,8 +99,11 @@ async def list_providers(user: User = Depends(current_user), container: Containe
     plan = plan_for(user)
     health = container.health_cache.get("providers", {}).get("data", {})
     return {
-        "default": container.settings.default_provider,
+        # what this user gets without picking: the server default if their plan allows it
+        "default": pick_default(plan, container),
         "fallback": container.settings.fallback_provider,
+        # what this user actually falls back to, in order (plans skip providers they lack)
+        "fallbacks": [n for n in container.settings.fallback_chain if plan.allows_provider(n)],
         "selected": user.preferred_provider,
         "can_switch": plan.can_switch_provider,
         "providers": [
