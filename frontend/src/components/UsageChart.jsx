@@ -1,5 +1,5 @@
 // Requests per day as isometric 3D bars, drawn in plain SVG: each bar is a
-// front face, a side face and a top face. Today's bar is violet. Not worth a
+// front face, a side face and a top face. Today's bar is in the accent. Not worth a
 // charting library for one chart.
 const W = 34; // bar width
 const D = 12; // depth offset for the side/top faces
@@ -18,16 +18,6 @@ export default function UsageChart({ days }) {
     <figure className="chart">
       <svg viewBox={`-34 -${D + 6} ${width + 34} ${H + PAD + D + 6}`} role="img"
         aria-label={`Requests per day over the last ${days.length} days: ${total} in total, peak ${max} in one day`}>
-        <defs>
-          <linearGradient id="barFront" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0" stopColor="#5eead4" />
-            <stop offset="1" stopColor="#0d9488" />
-          </linearGradient>
-          <linearGradient id="barFrontToday" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0" stopColor="#c4b5fd" />
-            <stop offset="1" stopColor="#7c3aed" />
-          </linearGradient>
-        </defs>
         {ticks.map((t) => {
           const y = H - (t / max) * (H - 10);
           return (

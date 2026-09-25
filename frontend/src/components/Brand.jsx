@@ -1,23 +1,16 @@
-// The DiffSage mark: a faceted gem split down the middle into a "+" half and
-// a "-" half, because the product's whole job is reading diffs.
+// The DiffSage mark: a crystal split down the middle into a "-" half and a
+// "+" half, because the product's whole job is reading diffs.
 export function Mark({ className = "mark" }) {
   return (
     <svg className={className} viewBox="0 0 40 40" aria-hidden="true">
-      <defs>
-        <linearGradient id="gemL" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stopColor="#a5f5e7" />
-          <stop offset="1" stopColor="#14b8a6" />
-        </linearGradient>
-        <linearGradient id="gemR" x1="1" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor="#c4b5fd" />
-          <stop offset="1" stopColor="#6d28d9" />
-        </linearGradient>
-      </defs>
-      <path d="M20 2 L37 15 L20 38 Z" fill="url(#gemR)" />
-      <path d="M20 2 L3 15 L20 38 Z" fill="url(#gemL)" />
-      <path d="M3 15 H37 L20 2 Z" fill="#ffffff" opacity="0.18" />
-      <path d="M9.5 21h5M12 18.5v5" stroke="#032420" strokeWidth="2" strokeLinecap="round" />
-      <path d="M25.5 21h5" stroke="#f5f3ff" strokeWidth="2" strokeLinecap="round" />
+      <path d="M20 1 7 11l13-2Z" fill="#7fe0cd" />
+      <path d="M7 11l13-2v22L7 29Z" fill="#4cc3ad" />
+      <path d="M7 29l13 2v8Z" fill="#37a592" />
+      <path d="M20 1l13 10-13-2Z" fill="#d2fbf3" />
+      <path d="M33 11 20 9v22l13-2Z" fill="#a5f5e7" />
+      <path d="M33 29 20 31v8Z" fill="#7fe0cd" />
+      <path d="M20 1v38" stroke="#070b12" strokeOpacity="0.45" strokeWidth="0.8" />
+      <path d="M10.5 20h6M26.5 17v6M23.5 20h6" stroke="#0a2724" strokeWidth="2.2" strokeLinecap="round" />
     </svg>
   );
 }

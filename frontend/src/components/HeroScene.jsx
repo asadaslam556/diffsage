@@ -27,7 +27,7 @@ export default function HeroScene() {
     const camera = new THREE.PerspectiveCamera(38, 1, 0.1, 100);
     camera.position.set(0, 0, 7.5);
 
-    // lights: teal key, a violet rim (the only violet on screen besides the logo), soft fill
+    // lights: teal key, a violet rim (the only violet on screen), soft fill
     scene.add(new THREE.AmbientLight(0x8fb3c9, 0.5));
     const key = new THREE.PointLight(0x5eead4, 40, 30);
     key.position.set(4, 3, 5);
