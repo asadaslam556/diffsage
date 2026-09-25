@@ -1,13 +1,13 @@
 # runtime deps for the API. Pinned to minor versions; bump deliberately.
-fastapi>=0.115,<0.120
-uvicorn[standard]>=0.30,<0.36
-pydantic>=2.8,<3
-sqlalchemy[asyncio]>=2.0.30,<2.1
-asyncpg>=0.29,<0.31
-aiosqlite>=0.20,<0.22
-alembic>=1.13,<1.17
-httpx>=0.27,<0.29
-redis>=5.0,<7
-PyJWT>=2.8,<3
-python-dotenv>=1.0,<2
-anyio>=4.4,<5
+fastapi>=0.141.1,<0.142
+uvicorn[standard]>=0.53.0,<0.54
+pydantic>=2.13.5,<3
+sqlalchemy[asyncio]>=2.0.54,<2.1
+asyncpg>=0.31.0,<0.32
+aiosqlite>=0.22.1,<0.23
+alembic>=1.20.0,<1.21
+httpx>=0.28.1,<0.29
+redis>=8.1.0,<9
+PyJWT>=2.14.0,<3
+python-dotenv>=1.2.3,<2
+anyio>=4.15.1,<5
