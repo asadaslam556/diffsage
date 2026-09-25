@@ -31,7 +31,7 @@
     <td><img src="docs/screenshots/usage.png" alt="Usage dashboard" /><br/><sub>Usage dashboard with the isometric chart</sub></td>
   </tr>
   <tr>
-    <td><img src="docs/screenshots/fallback.png" alt="Automatic fallback" /><br/><sub>Claude fails, Ollama takes over, and the UI says why</sub></td>
+    <td><img src="docs/screenshots/fallback.png" alt="Automatic fallback" /><br/><sub>Claude fails, DeepSeek takes over, and the UI says why</sub></td>
     <td><img src="docs/screenshots/settings.png" alt="Settings" /><br/><sub>Model choice with live health, plans, guidelines</sub></td>
   </tr>
 </table>

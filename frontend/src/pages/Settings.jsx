@@ -74,7 +74,7 @@ function ProviderSection({ onChanged }) {
         {!info.can_switch && <span className="muted small">Choosing a model is on Pro and Team</span>}
       </div>
       <p className="muted small">
-        If the model you pick fails or times out, the review falls back to {providerLabel(info.fallback)} automatically.
+        If the model you pick fails or times out, the review falls back to {(info.fallbacks ?? [info.fallback]).map(providerLabel).join(", then ")} automatically.
       </p>
       {stale && (
         <p className="notice fallback" role="status">

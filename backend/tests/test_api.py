@@ -230,6 +230,14 @@ async def test_free_plan_never_falls_back_to_a_paid_provider(client, auth, conta
     assert events[-1][1]["code"] == "providers_unavailable"
     assert container.providers["anthropic"].calls == []
 
+    container.settings = dataclasses.replace(container.settings, fallback_chain=("anthropic", "ollama"))
+    listing = (await client.get("/api/agent/providers", headers=auth)).json()
+    assert listing["fallbacks"] == ["ollama"]  # what Settings tells a Free user
+
+    container.settings = dataclasses.replace(container.settings, default_provider="anthropic")
+    listing = (await client.get("/api/agent/providers", headers=auth)).json()
+    assert listing["default"] == "ollama"  # Free can't use the paid server default, so Chat mustn't say "Answering with Claude"
+
 
 async def test_everything_down_gives_a_clean_error_event(client, auth, container):
     container.providers["ollama"].fail = "couldn't connect"
