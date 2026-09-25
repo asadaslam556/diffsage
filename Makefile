@@ -18,7 +18,7 @@ infra:         ## just the data stores + ollama, for running the app on the host
 	docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d postgres redis qdrant ollama ollama-pull
 
 dev-backend:
-	cd backend && alembic upgrade head && uvicorn app.main:create_app --factory --reload --port 8000  # ollama is on localhost:11434 via the compose port mapping
+	cd backend && alembic upgrade head && uvicorn app.main:create_app --factory --reload --port 8000  # ollama is on localhost:$${OLLAMA_PORT:-11434} via the compose port mapping
 
 dev-frontend:
 	cd frontend && npm run dev

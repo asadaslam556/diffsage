@@ -156,7 +156,7 @@ Open http://localhost:5173.
 | `error during connect ... docker_engine` | Docker Desktop isn't running. Start it and wait for "Engine running". |
 | Reviews say "None of the AI providers responded" | The model isn't downloaded yet (`docker compose logs ollama-pull`), or Docker has too little memory. Check `.\diffsage.ps1 health`. |
 | Reviews are very slow | You're on CPU with a 7B model. Set `OLLAMA_MODEL=qwen2.5-coder:3b` in `.env`, then `.\diffsage.ps1 up`. |
-| Port 8080 or 8000 already in use (`ports are not available`) | Put `WEB_PORT=8088` and/or `API_PORT=8001` (any free ports) in `.env` and run `up` again. For 11434, change the host port (the middle number in `127.0.0.1:11434:11434`) in `docker-compose.yml`. |
+| Port 8080 or 8000 already in use (`ports are not available`) | Put `WEB_PORT=8088` and/or `API_PORT=8001` (any free ports) in `.env` and run `up` again. If 11434 is taken (usually the Windows Ollama app), add `OLLAMA_PORT=11435`. |
 | Uploading a guideline fails with "Couldn't index the file" | `nomic-embed-text` isn't pulled yet. Wait for `ollama-pull` to finish. |
 | `dev-backend` can't reach the database | Run `.\diffsage.ps1 infra` first. It publishes Postgres/Redis/Qdrant on `127.0.0.1`. |
 | Signed out after restarting the backend | Expected if `JWT_SECRET` is empty (a random one is used per process). `.\diffsage.ps1 setup` sets a stable one. |

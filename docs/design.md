@@ -48,6 +48,7 @@ flowchart LR
 
 - **Geist** for the interface: 650 weight and tight tracking for headlines, 400/500 for body and controls.
 - **Geist Mono** only for code, diffs and model IDs (`qwen2.5-coder:3b`), where monospace carries meaning.
+- Both fonts ship inside the app (`@fontsource-variable/geist`, `@fontsource-variable/geist-mono`), so the UI works offline and nothing is fetched from Google.
 - Sentence case everywhere; no all-caps labels. Headings use `text-wrap: balance`, paragraphs `text-wrap: pretty`, and numbers use tabular figures.
 
 ## Components worth knowing

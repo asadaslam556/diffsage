@@ -13,3 +13,11 @@ updates:
     directory: /
     schedule: { interval: weekly }
     groups: { actions: { patterns: ["*"] } }
+  - package-ecosystem: docker-compose
+    directory: /
+    schedule: { interval: weekly }
+    groups: { images: { patterns: ["*"] } }
+    ignore:
+      # a major Postgres/Redis jump needs a data migration, not a routine bump
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]

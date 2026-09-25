@@ -1,13 +1,14 @@
-# runtime deps for the API. Pinned to minor versions; bump deliberately.
-fastapi>=0.141.1,<0.142
-uvicorn[standard]>=0.53.0,<0.54
-pydantic>=2.13.5,<3
-sqlalchemy[asyncio]>=2.0.54,<2.1
-asyncpg>=0.31.0,<0.32
-aiosqlite>=0.22.1,<0.23
-alembic>=1.20.0,<1.21
-httpx>=0.28.1,<0.29
-redis>=8.1.0,<9
-PyJWT>=2.14.0,<3
-python-dotenv>=1.2.3,<2
-anyio>=4.15.1,<5
+# runtime deps for the API. Exact pins so every build installs the same thing;
+# Dependabot opens a PR when a new version is out.
+fastapi==0.141.1
+uvicorn[standard]==0.53.0
+pydantic==2.13.5
+sqlalchemy[asyncio]==2.0.54
+asyncpg==0.31.0
+aiosqlite==0.22.1
+alembic==1.20.0
+httpx==0.28.1
+redis==8.1.0
+PyJWT==2.15.0
+python-dotenv==1.2.3
+anyio==4.15.1
