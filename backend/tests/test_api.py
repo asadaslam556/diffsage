@@ -100,6 +100,27 @@ async def test_rate_limit_kicks_in_with_headers(client, container):
     assert int(blocked.headers["Retry-After"]) >= 1
 
 
+async def test_sign_in_attempts_are_capped_per_account_not_just_per_ip(client, container):
+    await register(client, "victim@example.com")
+    container.settings = dataclasses.replace(
+        container.settings,
+        rate_limits={**container.settings.rate_limits, "auth": RateLimitRule(100, 60), "login_account": RateLimitRule(2, 60)},
+    )
+    wrong = {"email": "victim@example.com", "password": "not the password"}
+    assert (await client.post("/api/auth/login", json=wrong)).status_code == 401
+    assert (await client.post("/api/auth/login", json=wrong)).status_code == 401
+
+    # even the right password is refused until the window passes: a guesser can't confirm a hit
+    blocked = await client.post("/api/auth/login", json={"email": "VICTIM@example.com", "password": PASSWORD})
+    assert blocked.status_code == 429
+    assert blocked.json()["error"]["code"] == "account_throttled"
+    assert int(blocked.headers["Retry-After"]) >= 1
+
+    # other accounts aren't affected
+    other = await client.post("/api/auth/login", json={"email": "someone@example.com", "password": PASSWORD})
+    assert other.status_code == 401
+
+
 async def test_agent_tokens_cant_call_arbitrary_endpoints(client, container):
     from app.core.security import create_access_token
 
