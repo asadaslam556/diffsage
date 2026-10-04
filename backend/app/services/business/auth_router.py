@@ -9,6 +9,7 @@ whole lot for that user, since it usually means the token leaked.
 
 from __future__ import annotations
 
+import hashlib
 import logging
 from datetime import timedelta
 
@@ -19,7 +20,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.concurrency import run_in_threadpool
 
 from app.container import Container
-from app.core.errors import AuthError, Conflict
+from app.core.errors import AuthError, Conflict, RateLimited, ServiceUnavailable
 from app.core.security import (
     as_utc,
     burn_password_check,
@@ -89,11 +90,38 @@ async def register(
     return await _issue_tokens(db, user, container, response)
 
 
+async def _throttle_account(container: Container, email: str) -> None:
+    """Cap sign-in attempts per account, on top of the gateway's per-IP limit.
+
+    The IP limit alone lets someone with many addresses keep guessing one
+    password. Every attempt counts, so an existing and a missing account
+    behave the same. The email is hashed so it never sits in Redis.
+    """
+    rule = container.settings.rate_limits.get("login_account")
+    if rule is None:
+        return
+    key = "login-account:" + hashlib.sha256(email.encode()).hexdigest()[:32]
+    try:
+        result = await container.rate_limiter.hit(key, rule)
+    except Exception as exc:  # noqa: BLE001 - same fail-open policy as the gateway
+        if not container.settings.rate_limit_fail_open:
+            raise ServiceUnavailable("Service temporarily unavailable.", code="rate_limiter_down") from exc
+        log.warning("account throttle unavailable, letting the attempt through: %s", exc)
+        return
+    if not result.allowed:
+        minutes = max(1, round(result.reset_after / 60))
+        raise RateLimited(
+            f"Too many sign-in attempts for this account. Try again in {minutes} min.",
+            code="account_throttled", headers={"Retry-After": str(result.reset_after)},
+        )
+
+
 @router.post("/login", response_model=TokenResponse)
 async def login(
     body: Credentials, response: Response,
     db: AsyncSession = Depends(get_db), container: Container = Depends(get_container),
 ) -> TokenResponse:
+    await _throttle_account(container, body.email)
     iterations = container.settings.password_hash_iterations
     user = await db.scalar(select(User).where(User.email == body.email))
     if user is None:

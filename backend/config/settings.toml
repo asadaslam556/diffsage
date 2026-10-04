@@ -18,6 +18,7 @@ password_hash_iterations = 600000
 [rate_limits]
 # requests per window, keyed per user (or per IP when there's no user yet)
 auth = { limit = 10, window_seconds = 60 }
+login_account = { limit = 10, window_seconds = 900 }   # sign-in attempts per account, whatever the IP
 agent = { limit = 20, window_seconds = 60 }
 default = { limit = 120, window_seconds = 60 }
 fail_open = true                 # if Redis is down, let traffic through and log loudly
