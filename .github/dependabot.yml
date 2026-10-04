@@ -21,3 +21,5 @@ updates:
       # a major Postgres/Redis jump needs a data migration, not a routine bump
       - dependency-name: "*"
         update-types: ["version-update:semver-major"]
+      # Qdrant can't open storage from an older minor version; upgrade it one minor at a time by hand
+      - dependency-name: "qdrant/qdrant"

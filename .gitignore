@@ -24,9 +24,3 @@ coverage/
 .idea/
 .vscode/
 .DS_Store
-
-# local browser-automation output
-.playwright-mcp/
-.playwright-cli/
-
-.claude/

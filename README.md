@@ -3,109 +3,110 @@
 </p>
 
 <p align="center">
-  <b>Self-hosted AI code review.</b> Paste a diff, watch the review stream in, get your team's own guidelines cited back at you.<br/>
-  Runs on a local model by default; bring Claude, OpenAI or DeepSeek when you want. If a paid model fails, it falls back on its own.
+  <b>Self-hosted AI code review.</b> Paste a diff, watch the review stream in, and get your team's own guidelines cited back at you.<br/>
+  Runs on a local model by default; bring Claude, DeepSeek or OpenAI when you want. If a model fails, the next one takes over.
 </p>
 
 <p align="center">
-  <a href="https://skillicons.dev"><img src="https://skillicons.dev/icons?i=react,vite,threejs,js,py,fastapi,postgres,redis,docker,nginx,githubactions,powershell" alt="Tech stack" /></a>
+  <a href="https://github.com/asadaslam556/diffsage/actions/workflows/ci.yml"><img src="https://github.com/asadaslam556/diffsage/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>
+  <img src="https://img.shields.io/badge/license-MIT-5fd4bf" alt="MIT license" />
+  <img src="https://img.shields.io/badge/tests-122%20backend%20%C2%B7%209%20frontend-4ade80?logo=pytest&logoColor=white" alt="Tests" />
+  <img src="https://img.shields.io/badge/self--hosted-Docker%20Compose-2496ED?logo=docker&logoColor=white" alt="Docker Compose" />
 </p>
 
 <p align="center">
+  <img src="https://img.shields.io/badge/Python-3.12-3776AB?logo=python&logoColor=white" alt="Python" />
+  <img src="https://img.shields.io/badge/FastAPI-0.141-009688?logo=fastapi&logoColor=white" alt="FastAPI" />
+  <img src="https://img.shields.io/badge/SQLAlchemy-2.1-D71F00?logo=sqlalchemy&logoColor=white" alt="SQLAlchemy" />
+  <img src="https://img.shields.io/badge/Pydantic-v2-E92063?logo=pydantic&logoColor=white" alt="Pydantic" />
+  <img src="https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black" alt="React" />
+  <img src="https://img.shields.io/badge/Vite-8-646CFF?logo=vite&logoColor=white" alt="Vite" />
+  <img src="https://img.shields.io/badge/three.js-0.186-000000?logo=threedotjs&logoColor=white" alt="three.js" />
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/PostgreSQL-16-4169E1?logo=postgresql&logoColor=white" alt="PostgreSQL" />
+  <img src="https://img.shields.io/badge/Redis-7-DC382D?logo=redis&logoColor=white" alt="Redis" />
+  <img src="https://img.shields.io/badge/Qdrant-vector%20DB-DC244C?logo=qdrant&logoColor=white" alt="Qdrant" />
+  <img src="https://img.shields.io/badge/nginx-1.27-009639?logo=nginx&logoColor=white" alt="nginx" />
   <img src="https://img.shields.io/badge/Ollama-local%20default-000000?logo=ollama&logoColor=white" alt="Ollama" />
   <img src="https://img.shields.io/badge/Claude-Anthropic-D97757?logo=anthropic&logoColor=white" alt="Claude" />
-  <img src="https://img.shields.io/badge/OpenAI-compatible-412991" alt="OpenAI" />
-  <img src="https://img.shields.io/badge/DeepSeek-supported-4D6BFE?logo=deepseek&logoColor=white" alt="DeepSeek" />
-  <img src="https://img.shields.io/badge/Qdrant-vector%20DB-DC244C?logo=qdrant&logoColor=white" alt="Qdrant" />
-  <img src="https://img.shields.io/badge/SQLAlchemy-2.0-D71F00?logo=sqlalchemy&logoColor=white" alt="SQLAlchemy" />
-  <img src="https://img.shields.io/badge/Pydantic-v2-E92063?logo=pydantic&logoColor=white" alt="Pydantic" />
-  <img src="https://img.shields.io/badge/tests-pytest%20%2B%20vitest-0A9EDC?logo=pytest&logoColor=white" alt="Tests" />
-  <img src="https://img.shields.io/badge/license-MIT-5eead4" alt="MIT" />
+  <img src="https://img.shields.io/badge/DeepSeek-supported-4D6BFE" alt="DeepSeek" />
+  <img src="https://img.shields.io/badge/OpenAI-compatible-412991" alt="OpenAI compatible" />
 </p>
 
 ![A review streaming in](docs/screenshots/review-streaming.png)
 
 <table>
   <tr>
-    <td><img src="docs/screenshots/sign-in.png" alt="Sign-in with the 3D scene" /><br/><sub>Sign-in with the three.js crystal</sub></td>
+    <td><img src="docs/screenshots/sign-in.png" alt="Sign-in page with the 3D crystal" /><br/><sub>Sign-in with the three.js crystal</sub></td>
     <td><img src="docs/screenshots/usage.png" alt="Usage dashboard" /><br/><sub>Usage dashboard with the isometric chart</sub></td>
   </tr>
   <tr>
-    <td><img src="docs/screenshots/fallback.png" alt="Automatic fallback" /><br/><sub>Claude fails, DeepSeek takes over, and the UI says why</sub></td>
-    <td><img src="docs/screenshots/settings.png" alt="Settings" /><br/><sub>Model choice with live health, plans, guidelines</sub></td>
+    <td><img src="docs/screenshots/fallback.png" alt="Automatic fallback notice" /><br/><sub>Claude fails, DeepSeek takes over, and the UI says why</sub></td>
+    <td><img src="docs/screenshots/settings.png" alt="Settings page" /><br/><sub>Model choice with live health, plans, guidelines</sub></td>
   </tr>
 </table>
 
----
-
 ## Contents
 
-- [What it is](#what-it-is)
+- [What it does](#what-it-does)
 - [Architecture](#architecture)
-- [The seven layers](#the-seven-layers)
 - [Quick start on Windows](#quick-start-on-windows)
 - [Quick start on macOS / Linux](#quick-start-on-macos--linux)
+- [Running the code on the host](#running-the-code-on-the-host)
 - [Using it](#using-it)
 - [Configuration](#configuration)
 - [Project layout](#project-layout)
 - [Tests and CI](#tests-and-ci)
-- [More docs](#more-docs)
+- [Troubleshooting](#troubleshooting)
+- [Known limits](#known-limits)
+- [Security](#security)
+- [Author](#author) · [License](#license)
 
-## What it is
+## What it does
 
-DiffSage is a small but complete GenAI SaaS: login, a usage dashboard, a streaming chat UI, plans with quotas, and an agent that can look things up before it answers. The default use case is code review. The same agent loop also ships as a **research assistant** and a **support bot** (`backend/app/agent/profiles.py`); switching use case is a new profile, not new plumbing.
+DiffSage is a complete, self-hosted GenAI app: sign-in, a streaming review chat, a usage dashboard, plans with quotas, and an agent that looks things up before it answers. Code review is the default; the same agent loop also runs as a **research assistant** and a **support bot** (`backend/app/agent/profiles.py`).
 
 | | |
 | --- | --- |
-| **Streaming** | Token-by-token over Server-Sent Events, rendered live as Markdown with a severity gutter for issues and real diff highlighting. |
-| **Any model** | One provider interface. Ollama, Claude, OpenAI and DeepSeek ship in the box; any OpenAI-compatible API is a config table, not code. |
-| **Fallback** | If the chosen model errors, has no key, or doesn't start answering in time, the request moves to the next fallback (Ollama by default) and the UI says so. |
-| **RAG** | Upload a style guide. It's chunked, embedded, stored in Qdrant per user, and the agent searches it before reviewing. |
-| **Billing** | Free / Pro / Team plans with daily request caps, monthly token caps, input size limits and per-plan model access. |
-| **Real health** | `/api/health` actually pings Postgres, Redis, Qdrant and every configured model provider. |
+| **Streaming** | Token-by-token over Server-Sent Events, rendered as Markdown with a severity gutter (`blocker` / `major` / `minor` / `nit`) and real diff highlighting. |
+| **Any model** | One provider interface. Ollama, Claude, OpenAI and DeepSeek ship in the box; any OpenAI-compatible API is a settings table, not code. |
+| **Fallback** | If a model errors, has no key, or sends nothing within 25 s, the request moves to the next provider in the fallback chain and the UI says why. |
+| **Guidelines (RAG)** | Upload a style guide. It's chunked, embedded by Ollama, stored per user in Qdrant, and the agent searches it before reviewing. |
+| **Plans and quotas** | Free / Pro / Team with daily request caps, monthly token caps, input size limits and per-plan model access, all checked before a stream opens. |
+| **Security** | PBKDF2 passwords, rotating refresh tokens with reuse detection, per-IP and per-account sign-in limits, and a strict Content Security Policy. |
+| **Real health** | `/api/health` pings Postgres, Redis, Qdrant and every configured model provider. |
 
 ## Architecture
 
-It follows the classic GenAI SaaS flow one-to-one: **User request → API gateway → (Business logic API · AI agent service · Billing service) → Data & storage → Live UI response**, with the agent allowed to call back into the gateway.
+<p align="center"><img src="docs/images/system.svg" alt="System overview: web app, nginx, API gateway, agent service, provider router, Ollama and hosted models, billing, business API, Postgres, Redis and Qdrant" /></p>
 
-```mermaid
-flowchart TD
-    U["User request<br/>React web app"] -->|"HTTPS · Bearer JWT"| N["nginx<br/>static files · /api proxy · no buffering"]
-    N --> G["API gateway<br/>auth · routing · rate limits"]
-    G --> B["Business logic API<br/>users · sessions · documents"]
-    G --> A["AI agent service<br/>LLM calls & tools"]
-    G --> BL["Billing service<br/>plans & usage limits"]
-    A -. "agent may call again<br/>(5-min scoped token)" .-> G
-    A --> R{"Provider router"}
-    R -->|preferred| P["Claude · OpenAI · DeepSeek"]
-    R -->|fallback| O["Ollama (local)"]
-    B --> D[("Data & storage<br/>Postgres · Qdrant · Redis")]
-    A --> D
-    BL --> D
-    A ==>|"SSE, token by token"| L["Live UI response"]
-    L --> U
-```
-
-A full walkthrough (request path, sequence diagram, schema, auth, health, streaming) is in **[docs/architecture.md](docs/architecture.md)**.
-
-## The seven layers
+A request goes through **nginx** to the **API gateway**, which checks the route, the token and the rate limit. Then one of three services handles it, reading and writing the data stores, and the answer streams back to the browser. When the agent needs to look something up, it calls back into the same gateway with a short-lived token.
 
 | # | Layer | Where | What it does |
 | --- | --- | --- | --- |
-| 1 | **User request** | `frontend/` | React 19 + Vite. Sign in, dashboard, streaming chat, settings. Access token in memory, refresh token in an httpOnly cookie. The 3D sign-in scene is three.js, lazy-loaded. |
-| 2 | **API gateway** | `backend/app/gateway/` | Pure ASGI middleware (streaming-safe). A route table maps every `/api` prefix to a service, checks JWTs, blocks agent tokens from anything but two read-only routes, and applies fixed-window rate limits in Redis with `X-RateLimit-*` headers. |
-| 3 | **Business logic API** | `backend/app/services/business/` | Register/login/refresh/logout with rotating refresh tokens and reuse detection, conversations, messages, guideline uploads. |
-| 4 | **AI agent service** | `backend/app/services/agent/`, `backend/app/agent/` | Validates everything *before* the stream opens, then runs the agent loop: stream a turn, run requested tools through the gateway, repeat (bounded). The provider router picks the model and handles fallback. |
-| 5 | **Billing service** | `backend/app/services/billing/` | Plans as code, synced to Postgres at startup. Quota checks (402), plan checks (403), usage recorded on every request, including cancelled ones. |
-| 6 | **Data & storage** | `backend/app/db/`, `cache/`, `vectorstore/` | Postgres (SQLAlchemy 2 async + Alembic), Redis for rate limits and quota snapshots, Qdrant for embeddings filtered per user. |
-| 7 | **Live UI response** | `frontend/src/api/sse.js`, `pages/Chat.jsx` | `fetch` + a streaming SSE parser (EventSource can't POST or send auth headers). Tokens render as they arrive; tool calls and fallbacks show up inline. |
+| 1 | **Web app** | `frontend/` | React 19 + Vite. Access token in memory, refresh token in an HttpOnly cookie. The 3D sign-in scene is three.js, lazy-loaded. |
+| 2 | **API gateway** | `backend/app/gateway/` | Pure ASGI middleware (streaming-safe). Route table, JWT check, agent-token scope, Redis rate limits with `X-RateLimit-*` headers. |
+| 3 | **Business API** | `backend/app/services/business/` | Sign-up, sign-in, refresh, sign-out; conversations; guideline uploads and search. |
+| 4 | **Agent service** | `backend/app/services/agent/`, `backend/app/agent/` | Rejects bad requests before the stream opens, then runs the agent loop and streams the reply. |
+| 5 | **Billing** | `backend/app/services/billing/` | Plans as code, quota checks (402 / 403 / 422), usage recorded for every run, including stopped ones. |
+| 6 | **Data** | `backend/app/db/`, `cache/`, `vectorstore/` | Postgres (SQLAlchemy 2 async + Alembic), Redis for limits and usage snapshots, Qdrant for guideline vectors. |
+| 7 | **Live response** | `frontend/src/api/sse.js` | `fetch` + a streaming SSE parser (EventSource can't POST or send auth headers). |
+
+Every flow, with diagrams of the gateway, a full review, the agent loop, fallback, guidelines, usage, sign-in, the data model and deployment, is in **[docs/architecture.md](docs/architecture.md)**.
 
 ## Quick start on Windows
 
-You need **Docker Desktop** (with WSL 2) and about **8 GB of free disk** for the models. Everything else runs in containers. Open **PowerShell** in the project folder:
+<img src="https://img.shields.io/badge/Windows-10%20%2F%2011-0078D6?logo=data:image/svg%2bxml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0id2hpdGUiPjxwYXRoIGQ9Ik0yIDJoOS41djkuNUgyek0xMi41IDJIMjJ2OS41aC05LjV6TTIgMTIuNWg5LjVWMjJIMnpNMTIuNSAxMi41SDIyVjIyaC05LjV6Ii8+PC9zdmc+" alt="Windows" /> <img src="https://img.shields.io/badge/PowerShell-5.1+-5391FE?logo=data:image/svg%2bxml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSJ3aGl0ZSIgc3Ryb2tlLXdpZHRoPSIyLjQiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCI+PHBhdGggZD0iTTQgNmw3IDYtNyA2TTEzIDE4aDciLz48L3N2Zz4=" alt="PowerShell" /> <img src="https://img.shields.io/badge/Docker%20Desktop-WSL%202-2496ED?logo=docker&logoColor=white" alt="Docker Desktop" />
+
+You need **Docker Desktop** (WSL 2 backend, with at least 6 GB of memory) and about **8 GB of free disk** for the models. Open **PowerShell** in the project folder:
 
 ```powershell
-# 1. one-time: allow local scripts for your user
+git clone https://github.com/asadaslam556/diffsage.git
+cd diffsage
+
+# 1. once: allow local scripts for your user
 Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
 
 # 2. create .env with a random JWT secret
@@ -115,72 +116,109 @@ Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
 .\diffsage.ps1 up
 ```
 
-The first start pulls the chat model and `nomic-embed-text` into the Ollama container, which takes a few minutes. Then:
+The first start pulls the chat model and `nomic-embed-text` into the Ollama container, which takes a few minutes (`docker compose logs -f ollama-pull` shows progress).
 
 | What | URL |
 | --- | --- |
 | App | http://localhost:8080 |
 | Health report | http://localhost:8000/api/health |
-| API docs (dev only) | http://localhost:8000/docs |
+| API docs (not in production) | http://localhost:8000/docs |
 
-Other commands: `.\diffsage.ps1 logs`, `health`, `down`, `test`, `lint`. Run `.\diffsage.ps1` with no arguments for the full list.
+| Command | Does |
+| --- | --- |
+| `.\diffsage.ps1 setup` | Creates `.env` from `.env.example` with a random 64-character `JWT_SECRET` |
+| `.\diffsage.ps1 up` | Builds and starts all services, waits for the API, opens the browser |
+| `.\diffsage.ps1 health` | Prints the full health report |
+| `.\diffsage.ps1 logs` | Follows the backend logs |
+| `.\diffsage.ps1 down` | Stops everything (data stays in Docker volumes; `docker compose down -v` wipes accounts and models too) |
+| `.\diffsage.ps1 deps` | Creates `backend\.venv` and installs backend + frontend dependencies |
+| `.\diffsage.ps1 infra` | Starts only Postgres, Redis, Qdrant and Ollama, for host development |
+| `.\diffsage.ps1 dev-backend` | Runs migrations, then the API on :8000 with reload |
+| `.\diffsage.ps1 dev-frontend` | Runs Vite on :5173 |
+| `.\diffsage.ps1 test` | Backend and frontend tests |
+| `.\diffsage.ps1 lint` | `ruff check` on the backend |
 
-> **Port 8080 or 8000 taken?** (`ports are not available`) Add `WEB_PORT=8088` and/or `API_PORT=8001` to `.env` and run `up` again. The script picks both up.
->
-> **Laptop without an NVIDIA GPU?** Put `OLLAMA_MODEL=qwen2.5-coder:3b` in `.env` before `up`. The 7B default is noticeably better but slow on CPU. Be realistic about speed: on a 4-core laptop CPU inside Docker, a local model writes about **1–3 tokens per second**, so a full review takes a few minutes (it streams the whole time). For snappy reviews, add a Claude/OpenAI/DeepSeek key, or run on an NVIDIA GPU by uncommenting the `deploy:` block under `ollama` in `docker-compose.yml`.
-
-Step-by-step instructions, including running without Docker and troubleshooting, are in **[docs/windows-setup.md](docs/windows-setup.md)**.
+> **Laptop without an NVIDIA GPU?** Put `OLLAMA_MODEL=qwen2.5-coder:3b` in `.env` before `up`. The 7B default is better but slow on a CPU: expect about 1-3 tokens per second, so a local review takes a few minutes (it streams the whole time). For fast reviews add a Claude, DeepSeek or OpenAI key, or give Ollama an NVIDIA GPU by uncommenting the `deploy:` block in `docker-compose.yml`.
 
 ## Quick start on macOS / Linux
 
+<img src="https://img.shields.io/badge/macOS-supported-000000?logo=apple&logoColor=white" alt="macOS" /> <img src="https://img.shields.io/badge/Linux-supported-FCC624?logo=linux&logoColor=black" alt="Linux" /> <img src="https://img.shields.io/badge/GNU%20Make-targets-427819?logo=gnu&logoColor=white" alt="Make" />
+
 ```bash
+git clone https://github.com/asadaslam556/diffsage.git && cd diffsage
 cp .env.example .env
 python3 -c "import secrets; print('JWT_SECRET=' + secrets.token_urlsafe(48))" >> .env
-docker compose up --build
+make up
 ```
 
-`make up`, `make test`, `make infra`, `make dev-backend` and `make dev-frontend` do the same as their PowerShell counterparts.
+The generated `JWT_SECRET` line comes last in `.env`, so it wins over the `change-me` placeholder. `make down`, `make logs`, `make deps`, `make infra`, `make dev-backend`, `make dev-frontend`, `make test` and `make lint` match the PowerShell commands above.
+
+## Running the code on the host
+
+<p align="center"><img src="docs/images/dev-modes.svg" alt="Two ways to run DiffSage: everything in Docker, or the code on the host with the data stores in Docker" /></p>
+
+For hot reload you also need **Python 3.11+** and **Node 22**. Start the data stores in Docker (published on `127.0.0.1` only), then the API and the UI in two terminals:
+
+```powershell
+.\diffsage.ps1 deps
+.\diffsage.ps1 infra
+.\diffsage.ps1 dev-backend    # terminal 1: http://localhost:8000
+.\diffsage.ps1 dev-frontend   # terminal 2: http://localhost:5173 (proxies /api to :8000)
+```
 
 ## Using it
 
 1. **Create an account.** New accounts are on the Free plan: 25 reviews a day, local model only.
-2. **Paste code or a diff** into the composer (or click one of the starter cards) and press **Review** or `Ctrl + Enter`. The review streams in; **Stop** cancels it.
-3. **Upload guidelines** in Settings → Team guidelines. The reviewer searches them before it writes and cites the file when a rule applies.
-4. **Switch plans** in Settings to try Pro or Team. The self-serve switch is a stand-in for real checkout and is turned off with `BILLING__ALLOW_SELF_SERVE_PLAN_CHANGE=false`.
-5. **Pick a model** in Settings (Pro and Team). Providers without a key show as "No API key" and stay disabled.
+2. **Paste code or a diff** (or click a starter card) and press **Review** or `Ctrl + Enter`. The review streams in; **Stop** cancels it.
+3. **Upload guidelines** in Settings → Team guidelines (Markdown, code or text, up to 200 kB). The reviewer searches them and cites the file when a rule applies.
+4. **Switch plans** in Settings to try Pro or Team. Self-serve switching is for local use; the app refuses to start with it on in production.
+5. **Pick a model** in Settings (Pro and Team). Providers without a key show "No API key" and stay disabled.
 
-### Using paid models
+### Paid models and gateways
 
-Add any of these to `.env`, then `.\diffsage.ps1 up` again (or `docker compose up -d backend`):
+Add keys to `.env`, then run `.\diffsage.ps1 up` again (or `docker compose up -d backend`):
 
 ```dotenv
-ANTHROPIC_API_KEY=sk-ant-...
-OPENAI_API_KEY=sk-...
-DEEPSEEK_API_KEY=sk-...
+ANTHROPIC_API_KEY=<YOUR_ANTHROPIC_KEY>
+DEEPSEEK_API_KEY=<YOUR_DEEPSEEK_KEY>
+OPENAI_API_KEY=<YOUR_OPENAI_KEY>
+
+# make Claude the default, with DeepSeek then Ollama as fallbacks
+AGENT__DEFAULT_PROVIDER=anthropic
+AGENT__FALLBACK_PROVIDER=deepseek,ollama
+
+# optional: route Claude through a gateway that accepts POST {base}/v1/messages
+PROVIDERS__ANTHROPIC__BASE_URL=https://<YOUR_GATEWAY>
+PROVIDERS__ANTHROPIC__MODEL=<MODEL_NAME>
 ```
 
-Keys are only read from the environment. To make a paid model the default for everyone: `AGENT__DEFAULT_PROVIDER=anthropic`. If it errors or doesn't produce a first token within `agent.first_token_timeout_seconds`, the request falls back to `agent.fallback_provider` (Ollama by default; an ordered list like `AGENT__FALLBACK_PROVIDER=deepseek,ollama` works too, and plans skip providers they don't include) and the UI shows a notice.
+Fallbacks a user's plan doesn't include are skipped, so Free users never fall back to a paid model.
 
-### Already running Ollama on the host?
+### An Ollama already running on your machine
 
 ```dotenv
 OLLAMA_BASE_URL=http://host.docker.internal:11434
 ```
 
-Then `ollama pull qwen2.5-coder:7b` and `ollama pull nomic-embed-text` on the host.
+Then run `ollama pull qwen2.5-coder:7b` and `ollama pull nomic-embed-text` on the host.
 
 ## Configuration
 
-Defaults live in `backend/config/settings.toml`. Any value can be overridden with an environment variable that spells out its path with double underscores:
+Non-secret defaults live in `backend/config/settings.toml`. Any value can be overridden with an environment variable that spells out its path with double underscores, for example `RATE_LIMITS__AGENT__LIMIT=40` or `PROVIDERS__OLLAMA__MODEL=llama3.1:8b`.
 
-| Setting | Env var |
+| Variable | Used for |
 | --- | --- |
-| `[agent] default_provider` | `AGENT__DEFAULT_PROVIDER` |
-| `[agent] first_token_timeout_seconds` | `AGENT__FIRST_TOKEN_TIMEOUT_SECONDS` |
-| `[rate_limits] agent.limit` | `RATE_LIMITS__AGENT__LIMIT` |
-| `[providers.ollama] model` | `PROVIDERS__OLLAMA__MODEL` (or `OLLAMA_MODEL` via compose) |
+| `JWT_SECRET` | Signing access tokens (32+ characters; required in production) |
+| `ANTHROPIC_API_KEY`, `DEEPSEEK_API_KEY`, `OPENAI_API_KEY` | Hosted models (blank = "not configured") |
+| `AGENT__DEFAULT_PROVIDER`, `AGENT__FALLBACK_PROVIDER` | Default provider and the ordered fallback list |
+| `OLLAMA_MODEL`, `OLLAMA_EMBED_MODEL`, `OLLAMA_BASE_URL` | Local chat model, embedding model, external Ollama |
+| `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB` | Database credentials used by Compose |
+| `DATABASE_URL`, `REDIS_URL`, `QDRANT_URL`, `QDRANT_API_KEY` | Connection settings when running the backend on the host |
+| `WEB_PORT`, `API_PORT`, `OLLAMA_PORT` | Host ports (defaults 8080, 8000, 11434) |
+| `APP_ENVIRONMENT` | `production` turns on the strict start-up checks |
+| `BILLING__ALLOW_SELF_SERVE_PLAN_CHANGE` | Self-serve plan switching (must be off in production) |
 
-Secrets (`JWT_SECRET`, `DATABASE_URL`, `REDIS_URL`, `QDRANT_URL`, `<PROVIDER>_API_KEY`) only come from the environment. With `APP__ENVIRONMENT=production` the app refuses to start with a placeholder JWT secret or the default database password.
+With `APP_ENVIRONMENT=production` the app refuses to start with a placeholder JWT secret, the default database password, or self-serve plan changes turned on. Secrets only ever come from the environment, never from `settings.toml`. The full settings reference is in [docs/architecture.md](docs/architecture.md#configuration).
 
 ## Project layout
 
@@ -188,59 +226,72 @@ Secrets (`JWT_SECRET`, `DATABASE_URL`, `REDIS_URL`, `QDRANT_URL`, `<PROVIDER>_AP
 diffsage/
 ├── backend/
 │   ├── app/
-│   │   ├── gateway/          # layer 2: route table, auth check, rate limits (ASGI)
+│   │   ├── gateway/            # route table, JWT check, agent scope, rate limits
 │   │   ├── services/
-│   │   │   ├── business/     # layer 3: auth, users, sessions, documents
-│   │   │   ├── agent/        # layer 4: /api/agent/chat + the SSE stream
-│   │   │   ├── billing/      # layer 5: plans, quotas, usage history
-│   │   │   └── health/       # real checks for every component
-│   │   ├── agent/            # the agent loop, tools, profiles
-│   │   │   └── providers/    # one file per model API + registry + fallback router
-│   │   ├── db/ cache/ vectorstore/   # layer 6
-│   │   └── core/             # config, logging, errors, security
-│   ├── alembic/              # migrations
-│   ├── config/settings.toml  # non-secret defaults
-│   └── tests/                # 121 tests, no services needed
+│   │   │   ├── business/       # auth, users, sessions, guidelines
+│   │   │   ├── agent/          # /api/agent/chat and the SSE stream
+│   │   │   ├── billing/        # plans, quotas, usage history
+│   │   │   └── health/         # real checks for every component
+│   │   ├── agent/              # agent loop, tools, profiles
+│   │   │   └── providers/      # one file per model API, registry, fallback router
+│   │   ├── db/ cache/ vectorstore/
+│   │   └── core/               # config, logging, errors, security
+│   ├── alembic/                # migrations
+│   ├── config/settings.toml    # non-secret defaults
+│   └── tests/                  # 122 tests, no services needed
 ├── frontend/
 │   └── src/
-│       ├── api/              # fetch client + streaming SSE parser (layer 7)
-│       ├── components/       # 3D hero, tilt cards, markdown, charts
-│       └── pages/            # Login, Dashboard, Chat, Settings
-├── docs/                     # architecture, Windows setup, providers, design, review report
-├── docker-compose.yml        # the whole stack, one command
-├── docker-compose.dev.yml    # publishes the data stores on localhost for host dev
-├── diffsage.ps1              # Windows task runner
-└── Makefile                  # the same, for macOS/Linux
+│       ├── api/                # fetch client + streaming SSE parser
+│       ├── components/         # 3D hero, tilt cards, markdown, chart
+│       └── pages/              # Login, Dashboard, Chat, Settings
+├── docs/                       # architecture guide, diagrams, screenshots
+├── docker-compose.yml          # the whole stack
+├── docker-compose.dev.yml      # data stores on localhost for host dev
+├── diffsage.ps1                # Windows task runner
+└── Makefile                    # the same for macOS / Linux
 ```
 
 ## Tests and CI
 
+<img src="https://img.shields.io/badge/pytest-122%20passing-0A9EDC?logo=pytest&logoColor=white" alt="pytest" /> <img src="https://img.shields.io/badge/Vitest-9%20passing-6E9F18?logo=vitest&logoColor=white" alt="Vitest" /> <img src="https://img.shields.io/badge/ruff-clean-D7FF64?logo=ruff&logoColor=black" alt="ruff" /> <img src="https://img.shields.io/badge/GitHub%20Actions-CI-2088FF?logo=githubactions&logoColor=white" alt="GitHub Actions" /> <img src="https://img.shields.io/badge/CodeQL-enabled-2F363D?logo=github&logoColor=white" alt="CodeQL" /> <img src="https://img.shields.io/badge/Dependabot-weekly-025E8C?logo=dependabot&logoColor=white" alt="Dependabot" />
+
 ```powershell
 .\diffsage.ps1 deps   # once
-.\diffsage.ps1 test   # pytest (121) + vitest (9)
+.\diffsage.ps1 test   # pytest + vitest
 .\diffsage.ps1 lint
 ```
 
-The backend tests run the real FastAPI app in-process with SQLite, in-memory stand-ins for Redis and Qdrant, and scripted fake models, so they need no services. They cover auth (including refresh-token reuse), the gateway's 401/404/429 handling, streaming, quotas (402), plan rules (403), provider switching, fallback, mid-stream failures, the agent's tool calls going back through the gateway, and health checks with components deliberately broken.
+The backend tests run the real FastAPI app in-process with SQLite, in-memory stand-ins for Redis and Qdrant, and scripted fake models, so they need no services. They cover auth (including refresh-token reuse and the per-account sign-in limit), the gateway's 401 / 403 / 404 / 429 handling, streaming, quotas, plan rules, provider fallback, mid-stream failures, the agent's tool calls through the gateway, and health checks with components broken on purpose.
 
-CI (`.github/workflows/ci.yml`) lints and tests both halves, applies the migrations up/down/up against a real Postgres, and builds both Docker images.
+CI (`.github/workflows/ci.yml`) lints and tests both halves, applies the migrations up, down and up again on a real Postgres, and builds both Docker images. CodeQL scans every push, and Dependabot opens weekly update PRs.
 
-## More docs
+## Troubleshooting
 
-| Doc | For |
+| Symptom | Fix |
 | --- | --- |
-| [docs/architecture.md](docs/architecture.md) | How a request flows, sequence and ER diagrams, auth, health, streaming |
-| [docs/windows-setup.md](docs/windows-setup.md) | Detailed Windows setup, running without Docker, troubleshooting |
-| [docs/adding-a-provider.md](docs/adding-a-provider.md) | Plugging in another model API |
-| [docs/design.md](docs/design.md) | The design system: tokens, type, 3D moments, accessibility |
-| [docs/code-review-report.md](docs/code-review-report.md) | My pre-release review: bugs found, what was fixed, end-to-end results |
+| `running scripts is disabled on this system` | `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned`, or run `powershell -ExecutionPolicy Bypass -File .\diffsage.ps1 up` |
+| `error during connect ... docker_engine` | Docker Desktop isn't running. Start it and wait for "Engine running". |
+| `ports are not available` | Set `WEB_PORT`, `API_PORT` or `OLLAMA_PORT` in `.env` to free ports (for example 8088, 8001, 11435) and run `up` again. 11434 is often taken by the Windows Ollama app. |
+| "None of the AI providers responded" | The model is still downloading (`docker compose logs ollama-pull`) or Docker has too little memory. Check `.\diffsage.ps1 health`. |
+| Reviews are very slow | You're on CPU with a 7B model. Use `OLLAMA_MODEL=qwen2.5-coder:3b` or add a hosted model key. |
+| Uploading a guideline fails with "Couldn't index the file" | `nomic-embed-text` isn't pulled yet. Wait for `ollama-pull` to finish. |
+| `dev-backend` can't reach the database | Run `.\diffsage.ps1 infra` first. |
+| Signed out after restarting the backend | `JWT_SECRET` is empty, so each start makes a new one. `.\diffsage.ps1 setup` writes a stable one. |
+| Every review is answered by the fallback model | The hosted model's key is wrong or expired. Replace it in `.env` and run `up` again; reviews fall back automatically until then. |
 
 ## Known limits
 
-- One uvicorn worker per container; scale with more containers. Rate limits and caches already live in Redis, so they're shared.
-- The daily quota is checked when a request starts and recorded when it ends, so a user firing several streams at the same moment can overshoot the cap by a few requests. The agent rate limit (20/min) bounds it.
-- Plan changes are self-serve in dev. A real deployment would put Stripe Checkout in front of `POST /api/billing/plan` and flip the plan in the webhook.
-- Uploaded guidelines are text only (Markdown, code, plain text), up to 200k characters each.
+- One uvicorn worker per container; scale with more containers. Rate limits and caches already live in Redis.
+- The daily quota is checked when a request starts and recorded when it ends, so streams started at the same moment can overshoot it by a few requests. The 20-per-minute agent limit bounds this.
+- Two tabs refreshing the same session in the same second: the second tab is signed out.
+- Plan changes are self-serve for local use. A hosted deployment would put checkout in front of `POST /api/billing/plan`.
+- Sign-up says when an email is already registered, and there is no password reset; both need an email service.
+- Guidelines are text only (Markdown, code, plain text), up to 200,000 characters each.
+- Qdrant is pinned to 1.12.4: newer versions need a step-by-step upgrade of existing data, so it isn't bumped automatically.
+
+## Security
+
+Please report vulnerabilities privately as described in [SECURITY.md](SECURITY.md).
 
 ## Author
 
