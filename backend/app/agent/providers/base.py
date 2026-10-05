@@ -80,9 +80,19 @@ class LLMProvider(ABC):
     # --- shared behaviour -------------------------------------------------
 
     def is_configured(self) -> bool:
-        if not self.config.enabled or not self.config.base_url or not self.config.model:
-            return False
-        return bool(self.config.api_key) or not self.requires_api_key
+        return self.not_configured_reason() is None
+
+    def not_configured_reason(self) -> str | None:
+        """Why this provider can't be used, or None if it can."""
+        if not self.config.enabled:
+            return "disabled in settings"
+        if not self.config.base_url:
+            return "no base_url set"
+        if not self.config.model:
+            return "no model set"
+        if self.requires_api_key and not self.config.api_key:
+            return f"{self.name.upper()}_API_KEY isn't set"
+        return None
 
     async def send_message(
         self,

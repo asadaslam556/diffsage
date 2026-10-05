@@ -69,7 +69,11 @@ async def tools_with_data(db: AsyncSession, user_id: uuid.UUID, session_id: uuid
             has = await db.scalar(
                 select(ChatMessage.id)
                 .join(ChatSession, ChatSession.id == ChatMessage.session_id)
-                .where(ChatSession.user_id == user_id, ChatSession.id != session_id, ChatMessage.role == "assistant")
+                # same rows /reviews/recent returns: failed or empty replies aren't worth a round
+                .where(
+                    ChatSession.user_id == user_id, ChatSession.id != session_id, ChatMessage.role == "assistant",
+                    ChatMessage.status != "error", ChatMessage.content != "",
+                )
                 .limit(1)
             )
         else:

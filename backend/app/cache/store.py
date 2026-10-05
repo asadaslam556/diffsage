@@ -19,6 +19,7 @@ class Cache(Protocol):
     async def get_json(self, key: str) -> Any | None: ...
     async def set_json(self, key: str, value: Any, ttl: int) -> None: ...
     async def delete(self, *keys: str) -> None: ...
+    async def incr(self, key: str, by: int, ttl: int) -> int | None: ...
     async def ping(self) -> bool: ...
 
 
@@ -60,6 +61,17 @@ class RedisCache:
         except Exception as exc:  # noqa: BLE001
             self._warn("delete", exc)
 
+    async def incr(self, key: str, by: int, ttl: int) -> int | None:
+        try:
+            async with self.redis.pipeline(transaction=True) as pipe:
+                pipe.incrby(key, by)
+                pipe.expire(key, ttl)
+                value, _ = await pipe.execute()
+            return int(value)
+        except Exception as exc:  # noqa: BLE001
+            self._warn("incr", exc)
+            return None
+
     async def ping(self) -> bool:
         return bool(await self.redis.ping())
 
@@ -81,6 +93,11 @@ class MemoryCache:
     async def delete(self, *keys: str) -> None:
         for key in keys:
             self._data.pop(key, None)
+
+    async def incr(self, key: str, by: int, ttl: int) -> int | None:
+        value = int(await self.get_json(key) or 0) + by
+        await self.set_json(key, value, ttl)
+        return value
 
     async def ping(self) -> bool:
         return True

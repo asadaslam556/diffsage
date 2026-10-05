@@ -3,12 +3,14 @@
 This is the "agent may call again" arrow in the architecture diagram. Tools
 don't reach into the database directly; they go back through the gateway
 with a short-lived token scoped to the user, so the same auth, routing and
-rate limits apply to the agent as to the browser.
+rate limits apply to the agent as to the browser. A fresh token is minted
+for every call: a review on a slow CPU can run longer than any one token.
 """
 
 from __future__ import annotations
 
 import logging
+from collections.abc import Callable
 from typing import TYPE_CHECKING, Any
 
 from app.core.logging import request_id_var
@@ -27,9 +29,12 @@ class GatewayCallError(Exception):
 
 
 class GatewayClient:
-    def __init__(self, base_url: str, token: str, *, transport: "httpx.AsyncBaseTransport | None" = None, timeout: float = 10.0):
+    def __init__(
+        self, base_url: str, mint_token: Callable[[], str], *,
+        transport: "httpx.AsyncBaseTransport | None" = None, timeout: float = 10.0,
+    ):
         self.base_url = base_url.rstrip("/")
-        self.token = token
+        self.mint_token = mint_token
         self.transport = transport
         self.timeout = timeout
 
@@ -37,10 +42,9 @@ class GatewayClient:
         import httpx
 
         headers = {
-            "authorization": f"Bearer {self.token}",
+            "authorization": f"Bearer {self.mint_token()}",
             # keep the parent request id so the internal hop shows up in the same log trail
             "x-request-id": request_id_var.get(),
-            "x-internal-caller": "agent",
         }
         try:
             async with httpx.AsyncClient(base_url=self.base_url, transport=self.transport, timeout=self.timeout) as client:

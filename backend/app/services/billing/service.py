@@ -22,6 +22,10 @@ log = logging.getLogger(__name__)
 # before producing anything doesn't cost the user a review.
 BILLABLE = ("ok", "fallback", "cancelled")
 SNAPSHOT_TTL = 60
+# Reviews that have started but aren't recorded yet. Counting them closes the gap
+# where several streams started at once could all pass the daily check.
+# ponytail: a crashed worker leaves its slot taken until the key expires.
+IN_FLIGHT_TTL = 900  # longer than the slowest provider's request timeout
 
 
 def plan_for(user: User) -> PlanDef:
@@ -78,8 +82,15 @@ class BillingService:
         await self.invalidate(user_id)
 
     async def invalidate(self, user_id: uuid.UUID) -> None:
-        now = datetime.now(timezone.utc)
-        await self.cache.delete(self._key(user_id, now), f"billing:{user_id}")
+        await self.cache.delete(self._key(user_id, datetime.now(timezone.utc)))
+
+    async def reserve(self, user_id: uuid.UUID) -> int:
+        """Take an in-flight slot; returns how many are taken, this one included."""
+        # at least 1: a key that expired mid-review can leave the count below zero
+        return max(1, await self.cache.incr(f"inflight:{user_id}", 1, IN_FLIGHT_TTL) or 1)
+
+    async def release(self, user_id: uuid.UUID) -> None:
+        await self.cache.incr(f"inflight:{user_id}", -1, IN_FLIGHT_TTL)
 
     async def summary(self, user: User) -> dict:
         now = datetime.now(timezone.utc)
@@ -100,7 +111,11 @@ class BillingService:
     async def history(self, user_id: uuid.UUID, days: int) -> dict:
         now = datetime.now(timezone.utc)
         since = day_start(now) - timedelta(days=days - 1)
-        day = func.date(UsageRecord.created_at)
+        # bucket by UTC day like the quota does, whatever time zone the database runs in
+        column = UsageRecord.created_at
+        if self.db.get_bind().dialect.name == "postgresql":
+            column = func.timezone("UTC", column)
+        day = func.date(column)
         rows = (
             await self.db.execute(
                 select(
@@ -108,7 +123,8 @@ class BillingService:
                     func.count().label("requests"),
                     func.coalesce(func.sum(UsageRecord.input_tokens + UsageRecord.output_tokens), 0).label("tokens"),
                 )
-                .where(UsageRecord.user_id == user_id, UsageRecord.created_at >= since)
+                # same rows the quota counts, so the chart and the meter agree
+                .where(UsageRecord.user_id == user_id, UsageRecord.created_at >= since, UsageRecord.status.in_(BILLABLE))
                 .group_by(day)
             )
         ).all()

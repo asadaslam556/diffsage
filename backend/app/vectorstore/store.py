@@ -83,6 +83,14 @@ class QdrantStore:
             log.info("created qdrant collection %s (dim=%d)", self.collection, self.dim)
         elif response.status_code >= 400:
             raise VectorStoreError(f"qdrant collection check failed: {response.status_code}")
+        else:
+            size = (((response.json().get("result") or {}).get("config") or {}).get("params") or {}).get("vectors", {}).get("size")
+            if size is not None and size != self.dim:
+                # writing would fail on every upload with an unhelpful 400 from qdrant
+                raise VectorStoreError(
+                    f"qdrant collection {self.collection} holds {size}-d vectors but embeddings.dim is {self.dim}; "
+                    "change embeddings.dim or vectorstore.collection_prefix"
+                )
         self._ready = True
 
     async def upsert(self, user_id: str, document_id: str, filename: str, chunks: list[str], vectors: list[list[float]]) -> None:

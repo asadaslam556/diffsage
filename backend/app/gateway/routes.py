@@ -22,6 +22,9 @@ class GatewayRoute:
 ROUTES: tuple[GatewayRoute, ...] = (
     GatewayRoute("/api/health", "health", public=True),
     GatewayRoute("/api/auth", "business", public=True, rate_bucket="auth"),
+    # keeping a session alive isn't a password guess, so it stays out of the sign-in bucket
+    GatewayRoute("/api/auth/refresh", "business", public=True),
+    GatewayRoute("/api/auth/logout", "business", public=True),
     GatewayRoute("/api/app", "business"),
     GatewayRoute("/api/agent", "agent", rate_bucket="agent"),
     GatewayRoute("/api/billing", "billing"),

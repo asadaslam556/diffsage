@@ -49,7 +49,7 @@ async def _check_providers(container: Container, timeout: float) -> dict[str, di
     async def one(name: str) -> tuple[str, dict[str, Any]]:
         provider = container.providers[name]
         if not provider.is_configured():
-            return name, {"status": "not_configured", "detail": "no API key set" if provider.requires_api_key else "disabled", "model": provider.model}
+            return name, {"status": "not_configured", "detail": provider.not_configured_reason(), "model": provider.model}
         try:
             health = await asyncio.wait_for(provider.health_check(), timeout=timeout)
         except asyncio.TimeoutError:
@@ -64,6 +64,10 @@ async def _check_providers(container: Container, timeout: float) -> dict[str, di
         "data": results, "expires": time.monotonic() + container.settings.health_provider_cache_seconds,
     }
     return results
+
+
+async def provider_health(container: Container) -> dict[str, dict[str, Any]]:
+    return await _check_providers(container, container.settings.health_check_timeout)
 
 
 async def run_health_checks(container: Container) -> dict[str, Any]:

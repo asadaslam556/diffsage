@@ -4,8 +4,9 @@ blew up, or the user closed the tab halfway through.
 
 Events the frontend gets, in order:
   meta        session id + provider we're about to try
-  fallback    only if the first provider failed and we switched
-  provider    who actually answered
+  fallback    a provider failed before its first token and we switched
+  provider    who's answering; again after each tool round, and again if a
+              later round had to fall back
   tool_start / tool_end   when the agent looks something up
   token       a chunk of text (lots of these)
   error       if it failed; the stream ends right after
@@ -18,7 +19,7 @@ import asyncio
 import logging
 import time
 import uuid
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Awaitable, Callable
 from dataclasses import dataclass, field
 
 import anyio
@@ -56,14 +57,16 @@ async def chat_event_stream(
     session_id: uuid.UUID,
     provider: str,
     profile: str,
+    billing_release: Callable[[uuid.UUID], Awaitable[None]] | None = None,
 ) -> AsyncIterator[str]:
     started = time.perf_counter()
     state = StreamState(provider=provider)
     message_id = uuid.uuid4()
     prompt_chars = sum(len(m.content) for m in history) + len(system)
 
-    yield sse("meta", {"session_id": str(session_id), "message_id": str(message_id), "provider": provider, "profile": profile})
     try:
+        # inside the try, so a client that leaves this early still gets its reply row and usage record
+        yield sse("meta", {"session_id": str(session_id), "message_id": str(message_id), "provider": provider, "profile": profile})
         async for event in runner.run(history, system=system, preferred_provider=provider):
             if event.type == "text":
                 state.parts.append(event.text)
@@ -120,11 +123,15 @@ async def chat_event_stream(
         # the usage write would never land. Bounded so shutdown can't hang.
         with anyio.move_on_after(10, shield=True):
             await _persist(container, state, user_id, session_id, message_id, prompt_chars, int((time.perf_counter() - started) * 1000))
+            if billing_release is not None:
+                await billing_release(user_id)  # after the usage row, so the slot is never uncounted
 
 
 def _final_usage(state: StreamState, prompt_chars: int) -> Usage:
     usage = state.usage
-    if usage.total == 0 and (state.parts or state.status != "error"):
+    # Estimate only when the model produced something but didn't report usage. Nothing
+    # written (an error, or stopped before the first token) costs no tokens.
+    if usage.total == 0 and state.parts:
         usage = Usage(prompt_chars // 4, estimate_tokens("".join(state.parts)))
     return usage
 

@@ -63,9 +63,9 @@ class ProviderRouter:
         provider = self.providers.get(name)
         if provider is None:
             raise ProviderNotConfigured(name, "unknown provider")
-        if not provider.is_configured():
-            hint = f" (set {name.upper()}_API_KEY)" if provider.requires_api_key else ""
-            raise ProviderNotConfigured(name, f"not configured{hint}")
+        reason = provider.not_configured_reason()
+        if reason:
+            raise ProviderNotConfigured(name, f"not configured ({reason})")
         return provider
 
     async def stream(

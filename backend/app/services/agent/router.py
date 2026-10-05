@@ -25,10 +25,12 @@ from app.core.errors import ValidationFailed
 from app.core.security import create_access_token
 from app.db.models import ChatMessage, User
 from app.services.agent.stream import chat_event_stream
-from app.services.billing.policy import check_quota, pick_provider
+from app.services.billing.plans import PlanDef
+from app.services.billing.policy import UsageSnapshot, check_quota, pick_provider
 from app.services.billing.service import BillingService, plan_for
 from app.services.business.repository import get_or_create_session, recent_history, tools_with_data, touch
 from app.services.deps import current_user, get_container, get_db
+from app.services.health.checks import provider_health
 
 log = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/agent", tags=["agent"])
@@ -52,21 +54,43 @@ async def chat(
     if not body.message.strip():
         raise ValidationFailed("The message is empty.", code="empty_message")
 
+    if body.provider and body.provider not in container.providers:
+        raise ValidationFailed(f"There's no provider called '{body.provider}'.", code="unknown_provider")
+    if body.profile and get_profile(body.profile) is None:
+        raise ValidationFailed(f"There's no profile called '{body.profile}'.", code="unknown_profile")
+
     plan = plan_for(user)
+    # a saved preference for a provider that has since been removed from the config falls back to the default
+    saved = user.preferred_provider if user.preferred_provider in container.providers else None
     provider = pick_provider(
-        plan, body.provider or user.preferred_provider,
+        plan, body.provider or saved,
         default=settings.default_provider, fallback=settings.fallback_provider,
     )
     billing = BillingService(db, container.cache)
-    check_quota(plan, await billing.snapshot(user.id), input_chars=len(body.message))
+    snapshot = await billing.snapshot(user.id)
+    check_quota(plan, snapshot, input_chars=len(body.message))
+    in_flight = await billing.reserve(user.id)
+    try:
+        # the same check again, now counting reviews that are still streaming
+        check_quota(plan, UsageSnapshot(snapshot.requests_today + in_flight - 1, snapshot.tokens_this_month), input_chars=len(body.message))
+        return await _start_stream(body, user, db, container, plan, provider, billing)
+    except BaseException:
+        await billing.release(user.id)
+        raise
 
+
+async def _start_stream(
+    body: ChatRequest, user: User, db: AsyncSession, container: Container, plan: PlanDef, provider: str, billing: BillingService,
+) -> StreamingResponse:
+    settings = container.settings
     session = await get_or_create_session(
         db, user.id, body.session_id,
         first_message=body.message, profile=body.profile or settings.default_profile,
     )
-    profile = get_profile(body.profile or session.profile)
+    # the profile belongs to the conversation; it's only chosen when one starts
+    profile = get_profile(session.profile)
     if profile is None:
-        raise ValidationFailed(f"Unknown profile '{body.profile}'.", code="unknown_profile")
+        raise ValidationFailed(f"This conversation uses a profile that no longer exists ('{session.profile}').", code="unknown_profile")
 
     history = await recent_history(db, session.id, settings.history_messages)
     db.add(ChatMessage(session_id=session.id, role="user", content=body.message))
@@ -74,9 +98,11 @@ async def chat(
     await db.commit()
     history.append(Message(role="user", content=body.message))
 
-    # short-lived token so the agent's tools can call back through the gateway as this user
-    agent_token = create_access_token(user.id, settings.jwt_secret, minutes=5, scope="agent")
-    gateway = GatewayClient(settings.internal_gateway_url, agent_token, transport=container.gateway_transport)
+    # short-lived tokens so the agent's tools can call back through the gateway as this user
+    def mint_token() -> str:
+        return create_access_token(user.id, settings.jwt_secret, minutes=5, scope="agent")
+
+    gateway = GatewayClient(settings.internal_gateway_url, mint_token, transport=container.gateway_transport)
     tools = await tools_with_data(db, user.id, session.id, profile.tools)
     withheld = tuple(t for t in profile.tools if t not in tools)
     executor = ToolExecutor(tools, ToolContext(str(user.id), str(session.id), gateway), withheld=withheld)
@@ -85,7 +111,7 @@ async def chat(
     log.info("chat start session=%s provider=%s profile=%s chars=%d", session.id, provider, profile.name, len(body.message))
     stream = chat_event_stream(
         container=container, runner=runner, history=history, system=profile.system_prompt,
-        user_id=user.id, session_id=session.id, provider=provider, profile=profile.name,
+        user_id=user.id, session_id=session.id, provider=provider, profile=profile.name, billing_release=billing.release,
     )
     return StreamingResponse(
         stream,
@@ -97,7 +123,7 @@ async def chat(
 @router.get("/providers")
 async def list_providers(user: User = Depends(current_user), container: Container = Depends(get_container)) -> dict:
     plan = plan_for(user)
-    health = container.health_cache.get("providers", {}).get("data", {})
+    health = await provider_health(container)  # cached for a few seconds, so this is cheap
     return {
         # what this user gets without picking: the server default if their plan allows it
         "default": pick_default(plan, container),

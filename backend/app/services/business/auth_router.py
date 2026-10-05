@@ -2,9 +2,11 @@
 
 Access tokens live in memory on the client. The refresh token sits in an
 httpOnly cookie scoped to /api/auth, so JavaScript can't read it and it's
-only sent to these endpoints. Refresh tokens rotate on every use; reusing
-an old one (outside a short grace period for two tabs racing) revokes the
-whole lot for that user, since it usually means the token leaked.
+only sent to these endpoints. Refresh tokens rotate on every use. Reusing
+an old one within a few seconds is two tabs racing: that answers
+refresh_raced and the client retries with the cookie the other tab got.
+Later than that it usually means the token leaked, so every session for
+that user is revoked.
 """
 
 from __future__ import annotations
@@ -14,7 +16,7 @@ import logging
 from datetime import timedelta
 
 from fastapi import APIRouter, Depends, Request, Response, status
-from sqlalchemy import select, update
+from sqlalchemy import delete, select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.concurrency import run_in_threadpool
@@ -33,6 +35,7 @@ from app.core.security import (
     verify_password,
 )
 from app.db.models import RefreshToken, User
+from app.db.session import sync_plans
 from app.services.billing.plans import DEFAULT_PLAN
 from app.services.business.schemas import Credentials, TokenResponse, UserOut
 from app.services.deps import get_container, get_db
@@ -54,6 +57,11 @@ def user_out(user: User) -> UserOut:
 async def _issue_tokens(db: AsyncSession, user: User, container: Container, response: Response) -> TokenResponse:
     settings = container.settings
     token, token_hash = new_refresh_token()
+    # expired rows can't be used or replayed any more, so they'd only pile up
+    await db.execute(
+        delete(RefreshToken).where(RefreshToken.user_id == user.id, RefreshToken.expires_at < utcnow()),
+        execution_options={"synchronize_session": False},
+    )
     db.add(RefreshToken(
         user_id=user.id, token_hash=token_hash,
         expires_at=utcnow() + timedelta(days=settings.refresh_token_days),
@@ -79,13 +87,23 @@ async def register(
     if await db.scalar(select(User.id).where(User.email == body.email)):
         raise Conflict("An account with that email already exists.", code="email_taken")
     password_hash = await run_in_threadpool(hash_password, body.password, container.settings.password_hash_iterations)
-    user = User(email=body.email, password_hash=password_hash, plan_id=DEFAULT_PLAN)
-    db.add(user)
-    try:
-        await db.flush()
-    except IntegrityError as exc:  # two signups with the same email at the same moment
-        await db.rollback()
-        raise Conflict("An account with that email already exists.", code="email_taken") from exc
+    for attempt in range(2):
+        user = User(email=body.email, password_hash=password_hash, plan_id=DEFAULT_PLAN)
+        db.add(user)
+        try:
+            await db.flush()
+            break
+        except IntegrityError as exc:
+            await db.rollback()
+            if await db.scalar(select(User.id).where(User.email == body.email)):
+                # two sign-ups with the same email at the same moment
+                raise Conflict("An account with that email already exists.", code="email_taken") from exc
+            if attempt:
+                raise
+            # The plan rows are missing: the start-up sync ran before the database was
+            # ready. Sync them now instead of blaming the user's email.
+            log.warning("plans missing at sign-up, syncing them now")
+            await sync_plans(container.sessionmaker)
     log.info("new account %s", user.id)
     return await _issue_tokens(db, user, container, response)
 
@@ -150,14 +168,15 @@ async def refresh(
     if row is None or as_utc(row.expires_at) < now:
         raise AuthError("Your session expired. Sign in again.", code="refresh_expired")
     if row.revoked_at is not None:
-        if now - as_utc(row.revoked_at) > REUSE_GRACE:
-            log.warning("refresh token reuse for user %s, revoking all their sessions", row.user_id)
-            await db.execute(
-                update(RefreshToken)
-                .where(RefreshToken.user_id == row.user_id, RefreshToken.revoked_at.is_(None))
-                .values(revoked_at=now)
-            )
-            await db.commit()
+        if now - as_utc(row.revoked_at) <= REUSE_GRACE:
+            raise AuthError("Another tab just refreshed this session. Try again.", code="refresh_raced")
+        log.warning("refresh token reuse for user %s, revoking all their sessions", row.user_id)
+        await db.execute(
+            update(RefreshToken)
+            .where(RefreshToken.user_id == row.user_id, RefreshToken.revoked_at.is_(None))
+            .values(revoked_at=now)
+        )
+        await db.commit()
         raise AuthError("Your session expired. Sign in again.", code="refresh_reused")
 
     row.revoked_at = now

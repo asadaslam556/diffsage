@@ -43,8 +43,8 @@ class FakeProvider(LLMProvider):
         self.supports_tools = supports_tools
         self.calls: list[dict] = []
 
-    def is_configured(self) -> bool:
-        return self._configured
+    def not_configured_reason(self) -> str | None:
+        return None if self._configured else f"{self.name.upper()}_API_KEY isn't set"
 
     async def stream_response(self, messages, *, system=None, tools=None, temperature=0.2):
         self.calls.append({"messages": list(messages), "tools": tools, "system": system})

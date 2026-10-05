@@ -85,9 +85,24 @@ class AgentRunner:
         system: str,
         preferred_provider: str | None,
     ) -> AsyncIterator[StreamEvent]:
+        total = Usage()
+        try:
+            async for event in self._rounds(history, system, preferred_provider):
+                if event.type == "usage" and event.usage:
+                    total = total + event.usage
+                else:
+                    yield event
+        except Exception:
+            # a provider failing in a later round still used the tokens of the earlier
+            # ones; hand them over before the error so they get recorded
+            if total.total:
+                yield StreamEvent("usage", usage=total)
+            raise
+        yield StreamEvent("usage", usage=total)
+
+    async def _rounds(self, history: list[Message], system: str, preferred_provider: str | None) -> AsyncIterator[StreamEvent]:
         messages = list(history)
         provider = preferred_provider
-        total = Usage()
         seen: set[str] = set()  # tool calls already answered in this run
         answer_now = False  # set once the model starts repeating itself
         used_tools = False
@@ -125,10 +140,8 @@ class AgentRunner:
                     yield event
                 elif event.type == "tool_call" and event.tool_call:
                     calls.append(event.tool_call)
-                elif event.type == "usage" and event.usage:
-                    total = total + event.usage
                 else:
-                    yield event  # fallback notices and anything new pass straight through
+                    yield event  # usage, fallback notices and anything new pass straight through
 
             if held:
                 recovered = None if calls else text_tool_call("".join(held), known)
@@ -145,6 +158,11 @@ class AgentRunner:
                     yield StreamEvent.text_chunk("".join(held))
 
             if not calls:
+                break
+            if round_no == self.max_rounds:
+                # No tools were offered and there's no round left to answer in, so running
+                # these would only end the stream on a tool result. Keep what it wrote.
+                log.warning("model called %s on the last round, ignoring it", ", ".join(c.name for c in calls))
                 break
 
             used_tools = True
@@ -168,5 +186,3 @@ class AgentRunner:
             if text_parts:
                 # keep the streamed pre-tool text visually separate from the answer
                 yield StreamEvent.text_chunk("\n\n")
-
-        yield StreamEvent("usage", usage=total)

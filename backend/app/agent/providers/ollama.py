@@ -31,7 +31,7 @@ class OllamaProvider(LLMProvider):
         }
         if tools:
             body["tools"] = openai_tools(tools)  # same schema as OpenAI's
-        parser = OllamaStreamParser()
+        parser = OllamaStreamParser(self.name)
         try:
             async with self.client.stream("POST", f"{self.config.base_url}/api/chat", json=body) as response:
                 await raise_for_status(response, self.name)

@@ -42,7 +42,7 @@ class AnthropicProvider(LLMProvider):
             body["system"] = system
         if tools:
             body["tools"] = anthropic_tools(tools)
-        parser = AnthropicStreamParser()
+        parser = AnthropicStreamParser(self.name)
         try:
             async with self.client.stream("POST", f"{self.config.base_url}/v1/messages", json=body, headers=self._headers()) as response:
                 await raise_for_status(response, self.name)
@@ -56,7 +56,7 @@ class AnthropicProvider(LLMProvider):
 
     async def health_check(self) -> ProviderHealth:
         if not self.is_configured():
-            return ProviderHealth("not_configured", "ANTHROPIC_API_KEY isn't set")
+            return ProviderHealth("not_configured", self.not_configured_reason())
         # listing models is free and proves both reachability and the key
         response, latency, error = await timed_get(self.client, f"{self.config.base_url}/v1/models", headers=self._headers())
         return health_from_response(response, latency, error)
