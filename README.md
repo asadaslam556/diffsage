@@ -35,7 +35,10 @@
   <img src="https://img.shields.io/badge/OpenAI-compatible-412991" alt="OpenAI compatible" />
 </p>
 
-![A review streaming in](docs/screenshots/review-streaming.png)
+<p align="center">
+  <img src="docs/assets/demo.gif" alt="Walkthrough: sign in, switch to Pro, pick DeepSeek, upload a style guide, review a diff, check usage" width="960" />
+  <br/><sub>Sign in, pick a model, upload a style guide, review a diff, check usage. <a href="docs/assets/demo.mp4">Full-quality video (MP4)</a></sub>
+</p>
 
 <table>
   <tr>
@@ -165,6 +168,8 @@ For hot reload you also need **Python 3.11+** and **Node 22**. Start the data st
 ```
 
 ## Using it
+
+The demo at the top shows each of these steps.
 
 1. **Create an account.** New accounts are on the Free plan: 25 reviews a day, local model only.
 2. **Paste code or a diff** (or click a starter card) and press **Review** or `Ctrl + Enter`. The review streams in; **Stop** cancels it.
