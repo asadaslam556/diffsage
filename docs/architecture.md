@@ -6,7 +6,7 @@
   <img src="https://img.shields.io/badge/PostgreSQL-16-4169E1?logo=postgresql&logoColor=white" alt="PostgreSQL" />
   <img src="https://img.shields.io/badge/Redis-7-DC382D?logo=redis&logoColor=white" alt="Redis" />
   <img src="https://img.shields.io/badge/Qdrant-1.12.4-DC244C?logo=qdrant&logoColor=white" alt="Qdrant" />
-  <img src="https://img.shields.io/badge/Ollama-0.34.3-000000?logo=ollama&logoColor=white" alt="Ollama" />
+  <img src="https://img.shields.io/badge/Ollama-local%20default-000000?logo=ollama&logoColor=white" alt="Ollama" />
   <img src="https://img.shields.io/badge/DeepSeek-fallback-4D6BFE" alt="DeepSeek" />
   <img src="https://img.shields.io/badge/SSE-streaming-5fd4bf" alt="Server-Sent Events" />
 </p>
@@ -79,7 +79,7 @@ The gateway (`gateway/middleware.py`) is plain ASGI middleware, so it never buff
 | --- | --- |
 | `auth` | 10 per minute per IP (sign-up, sign-in) |
 | `login_account` | 10 sign-in attempts per 15 minutes per account, whatever the IP |
-| `agent` | 20 reviews per minute per user |
+| `agent` | 20 per minute per user on `/api/agent` (reviews, model list, profiles) |
 | `default` | 120 per minute per user, or per IP for refresh and sign-out |
 
 The agent's own tool calls count under a separate key from the user's browser requests, so a long review never uses up the user's allowance.
@@ -320,7 +320,7 @@ All routes are under `/api`. Interactive docs are at `/docs` outside production.
 
 ## Configuration
 
-Settings load in this order, later ones winning: `.env` in the repo root → `backend/.env` → `backend/config/settings.toml` → environment variables named `SECTION__KEY`. Secrets (`JWT_SECRET`, `<PROVIDER>_API_KEY`, `DATABASE_URL`, `QDRANT_API_KEY`) only ever come from the environment.
+`backend/config/settings.toml` holds the defaults, and any environment variable named `SECTION__KEY` overrides them. `backend/.env` and then the repo-root `.env` are read into the environment only for variables that aren't already set, so a real environment variable beats `backend/.env`, which beats `.env`. Secrets (`JWT_SECRET`, `<PROVIDER>_API_KEY`, `DATABASE_URL`, `QDRANT_API_KEY`) only ever come from the environment.
 
 | Section | Keys (defaults) |
 | --- | --- |
@@ -342,12 +342,12 @@ The app refuses to start if a rate limit or a named provider is missing. With `A
 
 | Service | Image | Port on the host | Notes |
 | --- | --- | --- | --- |
-| `frontend` | built: `node:22-alpine` → `nginx:1.27-alpine` | `WEB_PORT` (8080) | the only port open beyond localhost; health check on `/` |
+| `frontend` | built: `node:22-alpine` → `nginx` (alpine) | `WEB_PORT` (8080) | the only port open beyond localhost; health check on `/` |
 | `backend` | built: `python:3.12-slim`, non-root user | `127.0.0.1:API_PORT` (8000) | runs `alembic upgrade head`, then uvicorn; health check on `/api/health/live` |
 | `postgres` | `postgres:16-alpine` | none | `pgdata` volume |
 | `redis` | `redis:7-alpine` | none | in memory only |
 | `qdrant` | `qdrant/qdrant:v1.12.4` | none | `qdrant` volume; pinned, see below; health check on its port |
-| `ollama` | `ollama/ollama:0.34.3` | `127.0.0.1:OLLAMA_PORT` (11434) | `ollama` volume; keeps the model loaded for 24 h; health check with `ollama list` |
+| `ollama` | `ollama/ollama` (pinned in `docker-compose.yml`) | `127.0.0.1:OLLAMA_PORT` (11434) | `ollama` volume; keeps the model loaded for 24 h; health check with `ollama list` |
 | `ollama-pull` | same | none | pulls the chat and embedding models, warms the chat model, exits |
 
 `docker-compose.dev.yml` publishes Postgres, Redis and Qdrant on `127.0.0.1` for running the code on the host:

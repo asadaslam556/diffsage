@@ -16,19 +16,19 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/Python-3.12-3776AB?logo=python&logoColor=white" alt="Python" />
-  <img src="https://img.shields.io/badge/FastAPI-0.141-009688?logo=fastapi&logoColor=white" alt="FastAPI" />
+  <img src="https://img.shields.io/badge/FastAPI-async-009688?logo=fastapi&logoColor=white" alt="FastAPI" />
   <img src="https://img.shields.io/badge/SQLAlchemy-2.1-D71F00?logo=sqlalchemy&logoColor=white" alt="SQLAlchemy" />
   <img src="https://img.shields.io/badge/Pydantic-v2-E92063?logo=pydantic&logoColor=white" alt="Pydantic" />
   <img src="https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black" alt="React" />
   <img src="https://img.shields.io/badge/Vite-8-646CFF?logo=vite&logoColor=white" alt="Vite" />
-  <img src="https://img.shields.io/badge/three.js-0.186-000000?logo=threedotjs&logoColor=white" alt="three.js" />
+  <img src="https://img.shields.io/badge/three.js-3D%20hero-000000?logo=threedotjs&logoColor=white" alt="three.js" />
 </p>
 
 <p align="center">
   <img src="https://img.shields.io/badge/PostgreSQL-16-4169E1?logo=postgresql&logoColor=white" alt="PostgreSQL" />
   <img src="https://img.shields.io/badge/Redis-7-DC382D?logo=redis&logoColor=white" alt="Redis" />
   <img src="https://img.shields.io/badge/Qdrant-vector%20DB-DC244C?logo=qdrant&logoColor=white" alt="Qdrant" />
-  <img src="https://img.shields.io/badge/nginx-1.27-009639?logo=nginx&logoColor=white" alt="nginx" />
+  <img src="https://img.shields.io/badge/nginx-strict%20CSP-009639?logo=nginx&logoColor=white" alt="nginx" />
   <img src="https://img.shields.io/badge/Ollama-local%20default-000000?logo=ollama&logoColor=white" alt="Ollama" />
   <img src="https://img.shields.io/badge/Claude-Anthropic-D97757?logo=anthropic&logoColor=white" alt="Claude" />
   <img src="https://img.shields.io/badge/DeepSeek-supported-4D6BFE" alt="DeepSeek" />
@@ -281,7 +281,7 @@ CI (`.github/workflows/ci.yml`) lints and tests both halves, applies the migrati
 | `dev-backend` can't reach the database | Run `.\diffsage.ps1 infra` first. |
 | Pro reviews keep moving to DeepSeek | The local model took longer than 25 s to start answering, which a CPU can on a long diff. Raise `AGENT__FIRST_TOKEN_TIMEOUT_SECONDS` in `.env`. Free plans have no fallback, so they always wait. |
 | Signed out after restarting the backend | `JWT_SECRET` is empty, so each start makes a new one. `.\diffsage.ps1 setup` writes a stable one. |
-| Every review is answered by the fallback model | The hosted model's key is wrong or expired. Replace it in `.env` and run `up` again; reviews fall back automatically until then. |
+| Health shows DeepSeek (or another hosted model) as `down` with "API key rejected" | The key in `.env` is wrong or expired. Replace it and run `up` again. Reviews keep running on the local model meanwhile. |
 
 ## Known limits
 
