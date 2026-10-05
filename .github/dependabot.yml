@@ -23,3 +23,12 @@ updates:
         update-types: ["version-update:semver-major"]
       # Qdrant can't open storage from an older minor version; upgrade it one minor at a time by hand
       - dependency-name: "qdrant/qdrant"
+  # base images in the two Dockerfiles (python, node, nginx)
+  - package-ecosystem: docker
+    directories: ["/backend", "/frontend"]
+    schedule: { interval: weekly }
+    groups: { base-images: { patterns: ["*"] } }
+    ignore:
+      # a new Python or Node major is a deliberate upgrade, not a weekly bump
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]

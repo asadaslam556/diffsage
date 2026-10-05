@@ -37,11 +37,13 @@ function Ensure-Env {
   Write-Host "created .env with a random JWT_SECRET" -ForegroundColor Green
 }
 
-function Env-Port($name, $default) {
-  $m = Select-String -Path (Join-Path $Root ".env") -Pattern "^$name=(\d+)" -ErrorAction SilentlyContinue | Select-Object -First 1
-  if ($m) { return $m.Matches[0].Groups[1].Value }
+function Env-Value($name, $default) {
+  $m = Select-String -Path (Join-Path $Root ".env") -Pattern "^$name=(.+)$" -ErrorAction SilentlyContinue | Select-Object -Last 1
+  if ($m) { return $m.Matches[0].Groups[1].Value.Trim() }
   return $default
 }
+
+function Env-Port($name, $default) { return Env-Value $name $default }
 
 function Wait-Healthy {
   Write-Host "waiting for the API (first run also downloads the models, that can take a while)..."
@@ -88,14 +90,14 @@ try {
       Push-Location frontend; npm install; Pop-Location
     }
     "dev-backend" {
-      # talk to the dockerised stores from the host
-      $env:DATABASE_URL = "postgresql+asyncpg://app:app@localhost:5432/diffsage"
-      $env:REDIS_URL = "redis://localhost:6379/0"
-      $env:QDRANT_URL = "http://localhost:6333"
+      # talk to the dockerised stores from the host, with the same login compose gave Postgres
+      $dbUser = Env-Value "POSTGRES_USER" "app"; $dbPass = Env-Value "POSTGRES_PASSWORD" "app"; $dbName = Env-Value "POSTGRES_DB" "diffsage"
+      $env:DATABASE_URL = Env-Value "DATABASE_URL" "postgresql+asyncpg://${dbUser}:${dbPass}@localhost:5432/$dbName"
+      $env:REDIS_URL = Env-Value "REDIS_URL" "redis://localhost:6379/0"
+      $env:QDRANT_URL = Env-Value "QDRANT_URL" "http://localhost:6333"
       $env:PROVIDERS__OLLAMA__BASE_URL = "http://localhost:$(Env-Port "OLLAMA_PORT" 11434)"
       # compose maps OLLAMA_MODEL for the container; do the same when running on the host
-      $m = Select-String -Path .env -Pattern "^OLLAMA_MODEL=(.+)$" -ErrorAction SilentlyContinue | Select-Object -First 1
-      if ($m) { $env:PROVIDERS__OLLAMA__MODEL = $m.Matches[0].Groups[1].Value.Trim() }
+      $env:PROVIDERS__OLLAMA__MODEL = Env-Value "OLLAMA_MODEL" "qwen2.5-coder:7b"
       Push-Location backend
       & $Py -m alembic upgrade head
       & $Py -m uvicorn app.main:create_app --factory --reload --port 8000
