@@ -196,8 +196,9 @@ input::placeholder, textarea::placeholder { color: var(--faint); }
 .tilt {
   --rx: 0deg; --ry: 0deg; --mx: 50%; --my: 50%;
   position: relative;
+  /* flat on purpose: preserve-3d pulls a pressed button (it gets its own transform)
+     into the card's 3D plane, and the release can then land on the card instead */
   transform: perspective(1000px) rotateX(var(--rx)) rotateY(var(--ry));
-  transform-style: preserve-3d;
   transition: transform 0.45s var(--spring), box-shadow 0.35s var(--ease), border-color 0.3s;
 }
 .tilt.is-tilting { transition: transform 0.08s linear, box-shadow 0.35s, border-color 0.3s; box-shadow: var(--shadow-2); border-color: var(--accent-line); }
@@ -210,7 +211,6 @@ input::placeholder, textarea::placeholder { color: var(--faint); }
   opacity: 0; transition: opacity 0.3s;
 }
 .tilt.is-tilting::after { opacity: 1; }
-.lift { transform: translateZ(24px); }
 
 /* --- brand ------------------------------------------------------------------------ */
 
@@ -233,8 +233,10 @@ input::placeholder, textarea::placeholder { color: var(--faint); }
 }
 .hero-3d { position: relative; height: clamp(230px, 34vh, 360px); margin: 0.25rem 0 0.75rem -1.5rem; }
 .hero-3d canvas { display: block; width: 100% !important; height: 100% !important; }
-.hero-fallback { position: absolute; inset: 0; display: grid; place-items: center; }
-.hero-fallback .orb { width: 170px; height: 170px; border-radius: 42% 58% 55% 45%; background: radial-gradient(circle at 35% 30%, #a7eee0, #3cbfa8 45%, #123a40 95%); box-shadow: 0 0 90px rgba(60, 191, 168, 0.35); }
+/* HeroScene sets data-nowebgl when the browser can't make a WebGL context */
+.hero-fallback, .hero-canvas[data-nowebgl] { position: absolute; inset: 0; display: grid; place-items: center; }
+.hero-canvas[data-nowebgl]::before { content: ""; }
+.hero-fallback .orb, .hero-canvas[data-nowebgl]::before { width: 170px; height: 170px; border-radius: 42% 58% 55% 45%; background: radial-gradient(circle at 35% 30%, #a7eee0, #3cbfa8 45%, #123a40 95%); box-shadow: 0 0 90px rgba(60, 191, 168, 0.35); }
 .auth-pitch h1 { font-size: clamp(2.1rem, 4vw, 3.3rem); margin: 0 0 1rem; max-width: 15ch; letter-spacing: -0.035em; line-height: 1.04; font-weight: 650; }
 .auth-pitch .lede { color: var(--muted); max-width: 52ch; font-size: 1.05rem; line-height: 1.65; }
 .facts-inline { list-style: none; padding: 0; margin: 1.75rem 0 0; display: grid; gap: 0.6rem; max-width: 52ch; }

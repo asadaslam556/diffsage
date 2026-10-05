@@ -47,14 +47,23 @@ export async function toApiError(response) {
   );
 }
 
+async function refreshOnce() {
+  const res = await fetch("/api/auth/refresh", { method: "POST", credentials: "same-origin" });
+  if (!res.ok) throw await toApiError(res);
+  const data = await res.json();
+  accessToken = data.access_token;
+  return data;
+}
+
 export function refresh() {
   if (!refreshing) {
-    refreshing = fetch("/api/auth/refresh", { method: "POST", credentials: "same-origin" })
-      .then(async (res) => {
-        if (!res.ok) throw await toApiError(res);
-        const data = await res.json();
-        accessToken = data.access_token;
-        return data;
+    refreshing = refreshOnce()
+      .catch(async (err) => {
+        // Another tab rotated the shared cookie a moment ago. The browser has the
+        // new one by now, so wait for that response to land and try once more.
+        if (err.code !== "refresh_raced") throw err;
+        await new Promise((r) => setTimeout(r, 750));
+        return refreshOnce();
       })
       .finally(() => {
         refreshing = null;

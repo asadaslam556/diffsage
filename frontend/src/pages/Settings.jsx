@@ -158,7 +158,7 @@ function PlanSection({ user, onChanged }) {
                 {p.name}
                 {p.id === "pro" && !current && <span className="plan-flag">Recommended</span>}
               </div>
-              <div className="plan-price lift">
+              <div className="plan-price">
                 {p.price_cents ? `$${(p.price_cents / 100).toFixed(0)}` : "$0"} <small>a month</small>
               </div>
               <ul>
