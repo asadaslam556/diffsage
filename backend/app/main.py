@@ -120,8 +120,6 @@ def _register_error_handlers(app: FastAPI) -> None:
     for exc_type in (OSError, TimeoutError):  # OSError covers ConnectionError and gaierror
         app.add_exception_handler(exc_type, backend_unreachable)
 
-    @app.exception_handler(Exception)
-    async def unhandled(_: Request, exc: Exception):
-        log.exception("unhandled error")
-        return error_response(500, "internal_error", "Something went wrong on our side. It's been logged.")
+    # Anything else is answered by RequestContextMiddleware, which keeps the request id
+    # on the 500 (see gateway/middleware.py).
 

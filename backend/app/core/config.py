@@ -147,9 +147,10 @@ def _load_dotenv() -> None:
         from dotenv import load_dotenv
     except ImportError:  # optional in the slim test environment
         return
-    # repo-root .env is the one docker compose uses too; backend/.env wins if present
+    # Real environment variables always win. Then backend/.env, then the repo-root
+    # .env that docker compose uses too. Neither file overrides what's already set.
+    load_dotenv(BACKEND_DIR / ".env", override=False)
     load_dotenv(REPO_DIR / ".env", override=False)
-    load_dotenv(BACKEND_DIR / ".env", override=True)
 
 
 def build_settings(data: dict[str, Any], environ: dict[str, str]) -> Settings:

@@ -56,7 +56,6 @@ async def update_me(
             raise ValidationFailed(f"{name} isn't set up on this server yet (missing API key).", code="provider_not_configured")
     user.preferred_provider = name
     await db.commit()
-    await container.cache.delete(f"billing:{user.id}")
     return user_out(user)
 
 
@@ -153,8 +152,6 @@ async def upload_document(
     chunks = chunk_text(body.content)
     if not chunks:
         raise ValidationFailed("That file is empty.", code="empty_document")
-    if len(chunks) > 400:
-        raise ValidationFailed("That file is too big to index. Split it up.", code="document_too_large")
     try:
         vectors = await container.embedder.embed(chunks)
     except Exception as exc:  # noqa: BLE001 - provider down, wrong model, dim mismatch...
@@ -170,7 +167,16 @@ async def upload_document(
         await db.rollback()
         log.error("vector upsert failed: %s", exc)
         raise ServiceUnavailable("The search index is unavailable right now. Try again in a minute.", code="vectorstore_down") from exc
-    await db.commit()
+    try:
+        await db.commit()
+    except Exception:
+        # the vectors are in but the row isn't: take them out again so search never
+        # returns chunks of a document the user can't see or delete
+        try:
+            await container.vector_store.delete_document(str(user.id), str(document.id))
+        except VectorStoreError:
+            log.error("couldn't remove vectors of uncommitted document %s", document.id)
+        raise
     return _document_out(document)
 
 
@@ -183,6 +189,8 @@ async def delete_document(
     document = await db.get(Document, document_id)
     if document is None or document.user_id != user.id:
         raise NotFound("That document doesn't exist.", code="document_not_found")
+    # vectors first: if the row delete then fails the file is still listed and can be
+    # deleted again, while the other order could leave searchable chunks with no row
     try:
         await container.vector_store.delete_document(str(user.id), str(document.id))
     except VectorStoreError as exc:
@@ -219,7 +227,7 @@ async def recent_reviews(
     query = (
         select(ChatMessage, ChatSession.title)
         .join(ChatSession, ChatSession.id == ChatMessage.session_id)
-        .where(ChatSession.user_id == user.id, ChatMessage.role == "assistant", ChatMessage.status != "error")
+        .where(ChatSession.user_id == user.id, ChatMessage.role == "assistant", ChatMessage.status != "error", ChatMessage.content != "")
         .order_by(ChatMessage.created_at.desc())
         .limit(limit)
     )

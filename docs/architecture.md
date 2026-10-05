@@ -7,7 +7,7 @@
   <img src="https://img.shields.io/badge/Redis-7-DC382D?logo=redis&logoColor=white" alt="Redis" />
   <img src="https://img.shields.io/badge/Qdrant-1.12.4-DC244C?logo=qdrant&logoColor=white" alt="Qdrant" />
   <img src="https://img.shields.io/badge/Ollama-0.34.3-000000?logo=ollama&logoColor=white" alt="Ollama" />
-  <img src="https://img.shields.io/badge/Claude-Anthropic-D97757?logo=anthropic&logoColor=white" alt="Claude" />
+  <img src="https://img.shields.io/badge/DeepSeek-fallback-4D6BFE" alt="DeepSeek" />
   <img src="https://img.shields.io/badge/SSE-streaming-5fd4bf" alt="Server-Sent Events" />
 </p>
 
@@ -70,16 +70,19 @@ The gateway (`gateway/middleware.py`) is plain ASGI middleware, so it never buff
 | --- | --- | --- | --- |
 | `/api/health` | health | yes | default |
 | `/api/auth` | business (auth) | yes | auth |
+| `/api/auth/refresh`, `/api/auth/logout` | business (auth) | yes | default |
 | `/api/app` | business | no | default |
 | `/api/agent` | agent | no | agent |
 | `/api/billing` | billing | no | default |
 
 | Bucket | Limit |
 | --- | --- |
-| `auth` | 10 per minute per IP (sign-up, sign-in, refresh, sign-out) |
+| `auth` | 10 per minute per IP (sign-up, sign-in) |
 | `login_account` | 10 sign-in attempts per 15 minutes per account, whatever the IP |
-| `agent` | 20 per minute per user |
-| `default` | 120 per minute per user |
+| `agent` | 20 reviews per minute per user |
+| `default` | 120 per minute per user, or per IP for refresh and sign-out |
+
+The agent's own tool calls count under a separate key from the user's browser requests, so a long review never uses up the user's allowance.
 
 **Client IP.** nginx overwrites `X-Forwarded-For` with `$remote_addr` instead of appending to it, the gateway reads the rightmost hop, and the API port is published on `127.0.0.1` only. Together these stop a client from rotating a fake header to get around the per-IP limits.
 
@@ -91,12 +94,12 @@ The gateway (`gateway/middleware.py`) is plain ASGI middleware, so it never buff
 
 Everything that can be rejected is rejected **before** the stream opens, so the browser gets a normal status code instead of a broken stream. `POST /api/agent/chat` runs these steps in order:
 
-1. `422 empty_message` if there's nothing to review.
-2. Resolve the provider against the plan: `403 provider_not_in_plan`.
-3. Check the quota: `422 input_too_large`, then `402 daily_limit_reached` (with `Retry-After`), then `402 monthly_tokens_reached`.
-4. Load or create the conversation (`404 session_not_found`). New conversations are titled from the first line of the message.
-5. Check the profile (`422 unknown_profile`), load the last 20 messages, save the user message.
-6. Mint a 5-minute agent token and decide which tools have data behind them.
+1. `422 empty_message` if there's nothing to review; `422 unknown_provider` or `422 unknown_profile` for names that don't exist.
+2. Resolve the provider against the plan: `403 provider_not_in_plan`. A saved preference for a provider that was removed from the config falls back to the default.
+3. Check the quota: `422 input_too_large`, then `402 daily_limit_reached` (with `Retry-After`), then `402 monthly_tokens_reached`. The daily check also counts this user's reviews that are still streaming (an in-flight counter in Redis), so several tabs starting at once can't slip past the cap.
+4. Load or create the conversation (`404 session_not_found`). New conversations are titled from the first line of the message. The profile belongs to the conversation and is chosen when it starts.
+5. Load the last 20 messages and save the user message.
+6. Decide which tools have data behind them. Each tool call gets a freshly minted 5-minute agent token, so a slow review never outlives its token.
 7. Return the `StreamingResponse`.
 
 ### Stream events
@@ -119,18 +122,18 @@ nginx has `proxy_buffering off` for `/api/`, and responses carry `X-Accel-Buffer
 
 <p align="center"><img src="images/reply-status.svg" alt="Lifecycle of a reply's status: ok, fallback, error, cancelled" /></p>
 
-The stream's `finally` block (`services/agent/stream.py`) is shielded and has its own database session and a 10-second budget. Every run leaves an assistant message and a usage record, whether it finished, failed, or the user closed the tab. An empty answer is an error, not a silent success. `ok`, `fallback` and `cancelled` runs are billed; `error` runs are recorded but not billed. When a provider doesn't report token counts, they are estimated at four characters per token.
+The stream's `finally` block (`services/agent/stream.py`) is shielded and has its own database session and a 10-second budget. Every run leaves an assistant message and a usage record, whether it finished, failed, or the user closed the tab (even before the first event), and then frees its in-flight slot. An empty answer is an error, not a silent success. `ok`, `fallback` and `cancelled` runs count against the quota; `error` runs are recorded but not counted. Token counts come from the provider, and the tokens of earlier rounds are kept even if a later round fails. When a provider doesn't report them, they're estimated at four characters per token; a run that wrote nothing costs no tokens.
 
 ## The agent loop
 
 <p align="center"><img src="images/agent-loop.svg" alt="Agent loop: offer tools, stream a turn, run tool calls, answer" /></p>
 
-`agent/runner.py` streams a turn from the provider router. If the model asks for a tool, it runs it through the gateway and goes round again, up to `max_tool_rounds` (3). The last round offers no tools, so the model has to answer.
+`agent/runner.py` streams a turn from the provider router. If the model asks for a tool, it runs it through the gateway and goes round again, up to `max_tool_rounds` (3). The last round offers no tools, so the model has to answer; a tool call it makes anyway is ignored rather than run with no round left to answer in.
 
 | Tool | Calls | Offered when |
 | --- | --- | --- |
 | `search_guidelines(query, top_k)` | `GET /api/app/documents/search` | the user has uploaded guidelines |
-| `get_past_reviews(limit)` | `GET /api/app/reviews/recent` | there are replies in another conversation |
+| `get_past_reviews(limit)` | `GET /api/app/reviews/recent` | there are successful replies in another conversation |
 
 Three profiles share the loop (`agent/profiles.py`): `code_reviewer` (default, both tools), `research_assistant` and `support_bot` (guidelines only).
 
@@ -230,7 +233,7 @@ Then add `[providers.acme]` to `settings.toml` and set `ACME_API_KEY`. The rules
 
 <p align="center"><img src="images/guidelines.svg" alt="Guideline upload and search data flow through the embedder and Qdrant" /></p>
 
-**Upload** (`POST /api/app/documents`, up to 200,000 characters): the text is split into line-aware chunks of 900 characters with 150 overlap, each chunk is embedded by Ollama (`nomic-embed-text`, 768 dimensions), the document row is written, the vectors go to Qdrant with the `user_id` in their payload, and then the transaction commits. If Qdrant fails, the row is rolled back and the request answers `503`.
+**Upload** (`POST /api/app/documents`, up to 200,000 characters): the text is split into line-aware chunks of 900 characters with 150 overlap, each chunk is embedded by Ollama (`nomic-embed-text`, 768 dimensions), the document row is written, the vectors go to Qdrant with the `user_id` in their payload, and then the transaction commits. If Qdrant fails, the row is rolled back and the request answers `503`; if the commit fails, the vectors are removed again so search never returns chunks of a file that isn't listed. Deleting removes the vectors first, then the row.
 
 **Search** (`GET /api/app/documents/search`, called by the agent's tool): the query is embedded the same way and Qdrant returns the closest chunks, always filtered by `user_id`, so one user never sees another's guidelines.
 
@@ -248,7 +251,7 @@ Plans live in code (`services/billing/plans.py`) and are synced to the database 
 | Pro | $19 | 500 | 5M | all, can switch | 60k characters |
 | Team | $49 | unlimited | unlimited | all, can switch | 150k characters |
 
-Days and months are UTC. The quota check reads a 60-second usage snapshot from Redis, and every new usage record clears it. The dashboard's 14-day chart and request history come from `GET /api/billing/usage`.
+Days and months are UTC. The quota check reads a 60-second usage snapshot from Redis, and every new usage record clears it. The dashboard's 14-day chart and request history come from `GET /api/billing/usage`. The chart counts the same requests the quota does (failed ones are listed in the history but not counted), bucketed by UTC day whatever time zone the database runs in.
 
 Plan changes (`POST /api/billing/plan`) are self-serve for local use. With `billing.allow_self_serve_plan_change` off they answer `501 billing_not_configured`, and the app refuses to start in production with it on.
 
@@ -264,7 +267,7 @@ Plan changes (`POST /api/billing/plan`) are self-serve for local use. With `bill
 
 <p align="center"><img src="images/refresh-token.svg" alt="Refresh token lifecycle: active, rotated, reused, revoked, expired" /></p>
 
-Refresh tokens rotate on every use. Presenting an already-rotated token within 20 seconds (two tabs refreshing at once) just fails; presenting it later is treated as theft and revokes every session for that user. Signing out revokes the current token.
+Refresh tokens rotate on every use. Presenting an already-rotated token within 20 seconds is two tabs refreshing at once: the answer is `401 refresh_raced`, and the frontend waits a moment and retries with the cookie the other tab just received, so neither tab is signed out. Presenting it later is treated as theft and revokes every session for that user. Signing out revokes the current token, and expired tokens are deleted whenever a new one is issued.
 
 The frontend retries a request once after a `401` by refreshing, with a single refresh in flight at a time.
 
@@ -290,7 +293,7 @@ One Alembic migration (`backend/alembic/versions/0001_*`) creates every table. D
 | Anything else not working, including the first fallback | `degraded` (200) |
 | Everything working | `ok` (200) |
 
-Ollama reports `degraded` when it's running but the configured model hasn't been pulled, with the exact `ollama pull` command in the detail. Providers without a key show `not_configured` and aren't probed.
+Ollama reports `degraded` when it's running but the configured model hasn't been pulled, with the exact `ollama pull` command in the detail. Providers that can't be used show `not_configured` with the reason (no key, no model, disabled) and aren't probed. The Settings page reads the same cached results through `GET /api/agent/providers`.
 
 ## API reference
 
@@ -339,12 +342,12 @@ The app refuses to start if a rate limit or a named provider is missing. With `A
 
 | Service | Image | Port on the host | Notes |
 | --- | --- | --- | --- |
-| `frontend` | built: `node:22-alpine` → `nginx:1.27-alpine` | `WEB_PORT` (8080) | the only port open beyond localhost |
+| `frontend` | built: `node:22-alpine` → `nginx:1.27-alpine` | `WEB_PORT` (8080) | the only port open beyond localhost; health check on `/` |
 | `backend` | built: `python:3.12-slim`, non-root user | `127.0.0.1:API_PORT` (8000) | runs `alembic upgrade head`, then uvicorn; health check on `/api/health/live` |
 | `postgres` | `postgres:16-alpine` | none | `pgdata` volume |
 | `redis` | `redis:7-alpine` | none | in memory only |
-| `qdrant` | `qdrant/qdrant:v1.12.4` | none | `qdrant` volume; pinned, see below |
-| `ollama` | `ollama/ollama:0.34.3` | `127.0.0.1:OLLAMA_PORT` (11434) | `ollama` volume; keeps the model loaded for 24 h |
+| `qdrant` | `qdrant/qdrant:v1.12.4` | none | `qdrant` volume; pinned, see below; health check on its port |
+| `ollama` | `ollama/ollama:0.34.3` | `127.0.0.1:OLLAMA_PORT` (11434) | `ollama` volume; keeps the model loaded for 24 h; health check with `ollama list` |
 | `ollama-pull` | same | none | pulls the chat and embedding models, warms the chat model, exits |
 
 `docker-compose.dev.yml` publishes Postgres, Redis and Qdrant on `127.0.0.1` for running the code on the host:
@@ -353,7 +356,7 @@ The app refuses to start if a rate limit or a named provider is missing. With `A
 
 nginx (`frontend/nginx.conf`) serves the built app with a strict Content Security Policy (only the app's own scripts, styles, fonts and API, no frames), `X-Frame-Options: DENY`, `nosniff` and a referrer policy. `/assets/` is cached for a year, and `/api/` is proxied without buffering with a 660-second read timeout, longer than the Ollama provider's own. TLS is left to whatever sits in front.
 
-**Qdrant stays on 1.12.4.** Newer versions can't open storage created by 1.12 directly; the data has to be upgraded one minor version at a time. Dependabot is told to skip it.
+**Qdrant stays on 1.12.4.** Newer versions can't open storage created by 1.12 directly; the data has to be upgraded one minor version at a time. Dependabot is told to skip it, and the backend refuses a collection whose vector size doesn't match `embeddings.dim` with a clear error instead of failing every upload.
 
 ## UI system
 
@@ -388,6 +391,6 @@ Everything lives in one stylesheet, `frontend/src/styles.css`, with no CSS frame
 
 ## Tests and CI
 
-<img src="https://img.shields.io/badge/pytest-122%20passing-0A9EDC?logo=pytest&logoColor=white" alt="pytest" /> <img src="https://img.shields.io/badge/Vitest-9%20passing-6E9F18?logo=vitest&logoColor=white" alt="Vitest" /> <img src="https://img.shields.io/badge/GitHub%20Actions-CI-2088FF?logo=githubactions&logoColor=white" alt="GitHub Actions" />
+<img src="https://img.shields.io/badge/pytest-138%20passing-0A9EDC?logo=pytest&logoColor=white" alt="pytest" /> <img src="https://img.shields.io/badge/Vitest-11%20passing-6E9F18?logo=vitest&logoColor=white" alt="Vitest" /> <img src="https://img.shields.io/badge/GitHub%20Actions-CI-2088FF?logo=githubactions&logoColor=white" alt="GitHub Actions" />
 
-The backend tests run the real app in-process with SQLite, in-memory stand-ins for Redis and Qdrant, and scripted fake models, so they need no services. CI (`.github/workflows/ci.yml`) has four jobs: backend lint and tests, migrations up / down / up on a real Postgres 16, frontend tests and build, and both Docker image builds. CodeQL scans every push, and Dependabot opens one grouped update PR per ecosystem each week.
+The backend tests run the real app in-process with SQLite, in-memory stand-ins for Redis and Qdrant, and scripted fake models, so they need no services. CI (`.github/workflows/ci.yml`) has four jobs: backend lint and tests, migrations up / down / up on a real Postgres 16, frontend tests and build, and both Docker image builds. CodeQL scans every push, and Dependabot opens one grouped update PR per ecosystem each week (Python, npm, GitHub Actions, Compose images and the Dockerfile base images).

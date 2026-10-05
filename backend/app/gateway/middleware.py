@@ -141,7 +141,12 @@ class GatewayMiddleware:
             user_id_var.set(user_id)
 
         rule = settings.rate_limits.get(route.rate_bucket) or settings.rate_limits["default"]
-        subject = f"u:{user_id}" if user_id else f"ip:{_client_ip(scope, headers, settings.trust_proxy_headers)}"
+        if user_id:
+            # the agent's tool calls count separately, so a long review never eats into
+            # the browser's own allowance (and the other way round)
+            subject = f"{'a' if state.get('token_scope') == 'agent' else 'u'}:{user_id}"
+        else:
+            subject = f"ip:{_client_ip(scope, headers, settings.trust_proxy_headers)}"
         result: Any = None
         try:
             result = await container.rate_limiter.hit(f"{route.rate_bucket}:{subject}", rule)

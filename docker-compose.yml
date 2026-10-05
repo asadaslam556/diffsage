@@ -36,6 +36,13 @@ services:
     image: qdrant/qdrant:v1.12.4
     volumes:
       - qdrant:/qdrant/storage
+    # pinned: a newer Qdrant can't open this storage directly, it has to be upgraded one minor at a time
+    healthcheck:
+      # the image has no curl or wget, so just check the port answers
+      test: ["CMD-SHELL", "bash -c ':> /dev/tcp/127.0.0.1/6333' || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
     restart: unless-stopped
 
   ollama:
@@ -53,6 +60,11 @@ services:
     ports:
       # localhost only: Ollama has no auth, so anyone on the network could run or delete models
       - "127.0.0.1:${OLLAMA_PORT:-11434}:11434"   # set OLLAMA_PORT if a Windows Ollama already has 11434
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
     restart: unless-stopped
     # GPU users: uncomment to hand the GPU to Ollama
     # deploy:
@@ -63,7 +75,8 @@ services:
   # pulls the chat + embedding models, warms the chat model, then exits
   ollama-pull:
     image: ollama/ollama:0.34.3
-    depends_on: [ollama]
+    depends_on:
+      ollama: { condition: service_healthy }
     # wait for the server instead of a fixed sleep; on a slow first boot 3s isn't enough
     # and a failed pull here never retries, which leaves the app with no model
     entrypoint:
@@ -97,7 +110,7 @@ services:
     depends_on:
       postgres: { condition: service_healthy }
       redis: { condition: service_healthy }
-      qdrant: { condition: service_started }
+      qdrant: { condition: service_healthy }
     ports:
       # localhost only: the browser goes through nginx on :8080, and a public :8000
       # would let clients skip the proxy and forge X-Forwarded-For
@@ -112,6 +125,11 @@ services:
       backend: { condition: service_healthy }
     ports:
       - "${WEB_PORT:-8080}:80"   # set WEB_PORT in .env if 8080 is taken
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1/"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
     restart: unless-stopped
 
 volumes:

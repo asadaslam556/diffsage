@@ -65,14 +65,15 @@ class OpenAIStreamParser:
     """Tool call arguments arrive in fragments keyed by index, so we buffer
     them and only emit complete calls once the stream is done."""
 
-    def __init__(self) -> None:
+    def __init__(self, name: str = "openai-compatible") -> None:
+        self.name = name  # the configured provider, so errors say which one failed
         self._calls: dict[int, dict[str, str]] = {}
 
     def feed(self, chunk: dict[str, Any]) -> list[StreamEvent]:
         events: list[StreamEvent] = []
         if chunk.get("error"):
             err = chunk["error"]
-            raise ProviderError("openai-compatible", err.get("message", str(err)) if isinstance(err, dict) else str(err))
+            raise ProviderError(self.name, err.get("message", str(err)) if isinstance(err, dict) else str(err))
         for choice in chunk.get("choices") or []:
             delta = choice.get("delta") or {}
             if delta.get("content"):
@@ -138,7 +139,8 @@ def anthropic_tools(tools: list[ToolSpec]) -> list[dict[str, Any]]:
 
 
 class AnthropicStreamParser:
-    def __init__(self) -> None:
+    def __init__(self, name: str = "anthropic") -> None:
+        self.name = name
         self._blocks: dict[int, dict[str, str]] = {}
         self._input_tokens = 0
         self._output_tokens = 0
@@ -147,7 +149,7 @@ class AnthropicStreamParser:
         kind = data.get("type")
         if kind == "error":
             err = data.get("error") or {}
-            raise ProviderError("anthropic", f"{err.get('type', 'error')}: {err.get('message', 'unknown')}")
+            raise ProviderError(self.name, f"{err.get('type', 'error')}: {err.get('message', 'unknown')}")
         if kind == "message_start":
             usage = (data.get("message") or {}).get("usage") or {}
             self._input_tokens = int(usage.get("input_tokens", 0))
@@ -199,9 +201,12 @@ class OllamaStreamParser:
     """Ollama streams newline-delimited JSON. Tool calls show up whole,
     never in fragments, and usage only on the final done=true line."""
 
+    def __init__(self, name: str = "ollama") -> None:
+        self.name = name
+
     def feed(self, chunk: dict[str, Any]) -> list[StreamEvent]:
         if chunk.get("error"):
-            raise ProviderError("ollama", str(chunk["error"]))
+            raise ProviderError(self.name, str(chunk["error"]))
         events: list[StreamEvent] = []
         message = chunk.get("message") or {}
         if message.get("content"):

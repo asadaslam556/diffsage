@@ -46,7 +46,7 @@ def _window(now: float, rule: RateLimitRule) -> tuple[int, int]:
 
 
 class InMemoryRateLimiter:
-    """Single-process only. Used in tests and as the dev fallback."""
+    """Single-process only, so the tests use it; the app always uses Redis."""
 
     def __init__(self, clock: Callable[[], float] = time.time):
         self._clock = clock

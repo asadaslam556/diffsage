@@ -45,17 +45,13 @@ class OpenAICompatibleProvider(LLMProvider):
         tools: list[ToolSpec] | None = None,
         temperature: float = 0.2,
     ) -> AsyncIterator[StreamEvent]:
-        parser = OpenAIStreamParser()
+        parser = OpenAIStreamParser(self.name)
         body = self._body(messages, system, tools, temperature)
         try:
             async with self.client.stream("POST", f"{self.config.base_url}/chat/completions", json=body, headers=self._headers()) as response:
                 await raise_for_status(response, self.name)
                 async for chunk in iter_sse_data(response):
-                    try:
-                        events = parser.feed(chunk)
-                    except ProviderError as exc:
-                        raise ProviderError(self.name, exc.message) from exc
-                    for event in events:
+                    for event in parser.feed(chunk):
                         yield event
             for event in parser.finish():
                 yield event
@@ -66,6 +62,6 @@ class OpenAICompatibleProvider(LLMProvider):
 
     async def health_check(self) -> ProviderHealth:
         if not self.is_configured():
-            return ProviderHealth("not_configured", f"{self.name.upper()}_API_KEY isn't set")
+            return ProviderHealth("not_configured", self.not_configured_reason())
         response, latency, error = await timed_get(self.client, f"{self.config.base_url}/models", headers=self._headers())
         return health_from_response(response, latency, error)
