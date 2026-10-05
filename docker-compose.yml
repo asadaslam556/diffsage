@@ -47,7 +47,7 @@ services:
 
   ollama:
     # pinned so a rebuild never pulls a surprise; Dependabot opens a PR for new versions
-    image: ollama/ollama:0.34.3
+    image: ollama/ollama:0.35.0
     environment:
       # Loading a model from disk takes a minute or two on a CPU-only box. The default
       # 5-minute keep-alive would make everyone who comes back from a coffee pay that again.
@@ -74,7 +74,7 @@ services:
 
   # pulls the chat + embedding models, warms the chat model, then exits
   ollama-pull:
-    image: ollama/ollama:0.34.3
+    image: ollama/ollama:0.35.0
     depends_on:
       ollama: { condition: service_healthy }
     # wait for the server instead of a fixed sleep; on a slow first boot 3s isn't enough
