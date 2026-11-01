@@ -1,12 +1,12 @@
 # runtime deps for the API. Exact pins so every build installs the same thing;
 # Dependabot opens a PR when a new version is out.
-fastapi==0.142.2
+fastapi==0.162.0
 uvicorn[standard]==0.54.0
-pydantic==2.13.5
-sqlalchemy[asyncio]==2.1.2
-asyncpg==0.31.0
+pydantic==2.14.1
+sqlalchemy[asyncio]==2.1.6
+asyncpg==0.32.0
 aiosqlite==0.22.1
-alembic==1.20.0
+alembic==1.20.1
 httpx==0.28.1
 redis==8.1.0
 PyJWT==2.15.1
